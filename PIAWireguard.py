@@ -303,9 +303,13 @@ if args.debug:
 try:
     configFile = PIAWireguardConfigFileLoader(os.path.join(sys.path[0], "PIAWireguard.json"))
     if configFile.is_valid():
-        config = json.loads(configFile.load_config(), object_pairs_hook=CheckForDupKey)
+        try:
+            config = json.loads(configFile.load_config(), object_pairs_hook=CheckForDupKey)
+        except ValueError as e:
+            logger.error(f"Failed to load config file {configFile}")
+            sys.exit(1)
     else:
-        logger.error(f"Failed to find config file {configFile}")
+        logger.error(f"Invalid config file {configFile}")
         sys.exit(1)
 except ValueError as e:
     logger.error(f"Failed to import config file {configFile} error: {str(e)}")
