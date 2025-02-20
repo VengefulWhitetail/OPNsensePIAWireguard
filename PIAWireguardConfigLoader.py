@@ -7,5 +7,6 @@ class PIAWireguardConfigLoader(ABC):
 	def is_valid(self) -> bool:
 		pass
 
+	@abstractmethod
 	def load_config(self) -> str:
 		pass
