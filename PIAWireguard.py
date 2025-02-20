@@ -33,9 +33,9 @@ import sys
 import time
 import urllib3
 import secrets
-from abc import ABC, abstractmethod
 
-from PIAWireguardConfigFileLoader import PIAWireguardConfigFileLoader
+from abc import ABC, abstractmethod
+from enum import Enum
 
 #
 # Please see PIAWireguard.json for configuration settings
@@ -258,6 +258,9 @@ class State:
     metaIp = ''
     wgCn = ''
     wgIp = ''
+
+class ConfigLoaderType(Enum):
+	LocalFile = 0
 
 class PIAWireguardConfigLoader(ABC):
 
