@@ -1,7 +1,8 @@
 import os.path
+from PIAWireguardConfigLoader import PIAWireguardConfigLoader
 
 
-class PIAWireguardConfigFileLoader:
+class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 	def __init__(self, path: str):
 		self.path = path
 
