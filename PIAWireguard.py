@@ -260,28 +260,35 @@ class State:
     wgIp = ''
 
 class ConfigLoaderType(Enum):
-	LocalFile = 0
+    LocalFile = 0
 
 class PIAWireguardConfigLoader(ABC):
 
-	@abstractmethod
-	def is_valid(self) -> bool:
-		pass
+    @abstractmethod
+    def is_valid(self) -> bool:
+        pass
 
-	@abstractmethod
-	def get_json_config(self) -> str:
-		pass
+    @abstractmethod
+    def get_json_config(self) -> str:
+        pass
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
-	def __init__(self, path: str):
-		self.path = path
+    def __init__(self, path: str):
+        self.path = path
 
-	def is_valid(self) -> bool:
-		return os.path.isfile(self.path)
+    def is_valid(self) -> bool:
+        return os.path.isfile(self.path)
 
-	def get_json_config(self) -> str:
-		with open(self.path, 'r') as f:
-			return f.read()
+    def get_json_config(self) -> str:
+        with open(self.path, 'r') as f:
+            return f.read()
+
+def get_loader(path: str):
+    if not os.path.isfile(path):
+        logger.error(f"Failed to load config file {configFile}")
+        sys.exit(1)
+
+	pass
 
 # Fixes bug in python requests where this env is preferred over Verify=False
 if 'REQUESTS_CA_BUNDLE' in os.environ:
