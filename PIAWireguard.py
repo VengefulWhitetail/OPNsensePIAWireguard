@@ -269,7 +269,7 @@ class PIAWireguardConfigLoader(ABC):
 		pass
 
 	@abstractmethod
-	def load_config(self) -> str:
+	def get_json_config(self) -> str:
 		pass
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
@@ -279,7 +279,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 	def is_valid(self) -> bool:
 		return os.path.isfile(self.path)
 
-	def load_config(self) -> str:
+	def get_json_config(self) -> str:
 		with open(self.path, 'r') as f:
 			return f.read()
 
@@ -307,7 +307,7 @@ try:
     configFile = PIAWireguardConfigFileLoader(os.path.join(sys.path[0], "PIAWireguard.json"))
     if configFile.is_valid():
         try:
-            config = json.loads(configFile.load_config(), object_pairs_hook=CheckForDupKey)
+            config = json.loads(configFile.get_json_config(), object_pairs_hook=CheckForDupKey)
         except ValueError as e:
             logger.error(f"Failed to load config file {configFile}")
             sys.exit(1)
