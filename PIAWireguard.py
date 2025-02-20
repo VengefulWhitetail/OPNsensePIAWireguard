@@ -265,7 +265,7 @@ class ConfigLoaderType(Enum):
 class PIAWireguardConfigLoader(ABC):
 
     @abstractmethod
-    def is_valid(self) -> bool:
+    def is_data_valid(self) -> bool:
         pass
 
     @abstractmethod
@@ -276,7 +276,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     def __init__(self, path: str):
         self.path = path
 
-    def is_valid(self) -> bool:
+    def is_data_valid(self) -> bool:
         return os.path.isfile(self.path)
 
     def get_json_config(self) -> str:
@@ -288,7 +288,7 @@ def get_loader(path: str):
         logger.error(f"Failed to load config file {configFile}")
         sys.exit(1)
 
-	pass
+    pass
 
 # Fixes bug in python requests where this env is preferred over Verify=False
 if 'REQUESTS_CA_BUNDLE' in os.environ:
@@ -312,7 +312,7 @@ if args.debug:
 # Import our config file
 try:
     configFile = PIAWireguardConfigFileLoader(os.path.join(sys.path[0], "PIAWireguard.json"))
-    if configFile.is_valid():
+    if configFile.is_data_valid():
         try:
             config = json.loads(configFile.get_json_config(), object_pairs_hook=CheckForDupKey)
         except ValueError as e:
