@@ -5,7 +5,6 @@ class PIAWireguardConfigFileLoader:
 	def __init__(self, path: str):
 		self.path = path
 
-	#@property
 	def is_valid(self) -> bool:
 		return os.path.isfile(self.path)
 
