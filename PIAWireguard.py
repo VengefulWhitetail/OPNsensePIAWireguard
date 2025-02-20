@@ -34,6 +34,8 @@ import time
 import urllib3
 import secrets
 
+from PIAWireguardConfigFileLoader import PIAWireguardConfigFileLoader
+
 #
 # Please see PIAWireguard.json for configuration settings
 #
@@ -277,9 +279,9 @@ if args.debug:
 
 # Import our config file
 try:
-    configFile = os.path.join(sys.path[0], "PIAWireguard.json")
-    if os.path.isfile(configFile):
-        config = json.loads(open(configFile, 'r').read(), object_pairs_hook=CheckForDupKey)
+    configFile = PIAWireguardConfigFileLoader(os.path.join(sys.path[0], "PIAWireguard.json"))
+    if configFile.is_valid():
+        config = json.loads(configFile.load_config(), object_pairs_hook=CheckForDupKey)
     else:
         logger.error(f"Failed to find config file {configFile}")
         sys.exit(1)
