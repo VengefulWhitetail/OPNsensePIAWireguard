@@ -67,8 +67,15 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 
 # Factory method to create a config loader from loader data file
 def get_loader(path: str) -> PIAWireguardConfigLoader:
-    pass
+    with open(path, 'r') as f:
+        loaderJSON = json.loads(f.read())
 
+    if "loaderType" not in loaderJSON:
+        raise ValueError("Loader config data missing required key: loaderType")
+
+    if "arguments" not in loaderJSON:
+        raise ValueError("Loader config data missing required key: arguments")
+    pass
 
 #
 # Script Start
