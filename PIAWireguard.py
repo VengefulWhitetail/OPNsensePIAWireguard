@@ -285,10 +285,6 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 
 # Factory method to create a config loader from loader data file
 def get_loader(path: str) -> PIAWireguardConfigLoader:
-    if not os.path.isfile(path):
-        logger.error(f"Failed to load config file {configFile}")
-        sys.exit(1)
-
     pass
 
 # Fixes bug in python requests where this env is preferred over Verify=False
@@ -309,6 +305,12 @@ args = parser.parse_args()
 # Update the logging level based on the debug argument
 if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
+
+# Create our loader from loader data file
+loaderFile = os.path.join(sys.path[0], "PIAWireguardLoader.json")
+if not os.path.isfile(loaderFile):
+    logger.error(f"Failed to find loader config file {loaderFile}")
+    sys.exit(1)
 
 # Import our config file
 try:
