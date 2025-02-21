@@ -82,7 +82,7 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
         try:
             loaderType = ConfigLoaderType[loaderJSON["loaderType"]]
         except KeyError:
-            logger.error(f"Unable to parse required key: loaderType in {path}")
+            logger.error(f"Unable to parse required key: loaderType in {path}. The value is either not correctly formatted or has an undefined value.")
             sys.exit(1)
 
     loaderArgs = loaderJSON['arguments']
