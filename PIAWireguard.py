@@ -75,7 +75,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     """Configuration loader which reads from a local file"""
     def __init__(self, loader_args: list[str]):
         """Argument uses:
-            0: File name"""
+            0: File name relative to sys.path[0]"""
         self.path = os.path.join(sys.path[0], loader_args[0])
 
     def is_data_valid(self) -> bool:
