@@ -75,6 +75,15 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
 
     if "arguments" not in loaderJSON:
         raise ValueError("Loader config data missing required key: arguments")
+
+    try:
+        loaderType = ConfigLoaderType(int(loaderJSON["loaderType"]))
+    except ValueError:
+        try:
+            loaderType = ConfigLoaderType[loaderJSON["loaderType"]]
+        except KeyError:
+            logger.error(f"Unable to parse required key: loaderType in {path}")
+            sys.exit(1)
     pass
 
 #
