@@ -45,6 +45,9 @@ class ConfigLoaderType(Enum):
     LocalFile = 0
 
 class PIAWireguardConfigLoader(ABC):
+    @abstractmethod
+    def __init__(self, *loader_args: str):
+        pass
 
     @abstractmethod
     def is_data_valid(self) -> bool:
@@ -55,8 +58,8 @@ class PIAWireguardConfigLoader(ABC):
         pass
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
-    def __init__(self, path: str):
-        self.path = os.path.join(sys.path[0], path)
+    def __init__(self, *loader_args: str):
+        self.path = os.path.join(sys.path[0], loader_args[0])
 
     def is_data_valid(self) -> bool:
         return os.path.isfile(self.path)
