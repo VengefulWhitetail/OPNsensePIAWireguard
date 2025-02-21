@@ -274,7 +274,7 @@ class PIAWireguardConfigLoader(ABC):
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     def __init__(self, path: str):
-        self.path = path
+        self.path = os.path.join(sys.path[0], path)
 
     def is_data_valid(self) -> bool:
         return os.path.isfile(self.path)
@@ -312,7 +312,7 @@ if args.debug:
 
 # Import our config file
 try:
-    configFile = PIAWireguardConfigFileLoader(os.path.join(sys.path[0], "PIAWireguard.json"))
+    configFile = PIAWireguardConfigFileLoader("PIAWireguard.json")
     if configFile.is_data_valid():
         try:
             config = json.loads(configFile.get_json_config(), object_pairs_hook=CheckForDupKey)
