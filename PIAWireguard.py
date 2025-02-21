@@ -84,6 +84,8 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
         except KeyError:
             logger.error(f"Unable to parse required key: loaderType in {path}")
             sys.exit(1)
+
+    loaderArgs = loaderJSON['arguments']
     pass
 
 #
