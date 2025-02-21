@@ -312,6 +312,8 @@ if not os.path.isfile(loaderFile):
     logger.error(f"Failed to find loader config file {loaderFile}")
     sys.exit(1)
 
+loader = get_loader(loaderFile)
+
 # Import our config file
 try:
     configFile = PIAWireguardConfigFileLoader("PIAWireguard.json")
