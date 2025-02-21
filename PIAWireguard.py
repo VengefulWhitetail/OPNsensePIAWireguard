@@ -91,6 +91,8 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
     loaderArgs = loaderJSON['arguments']
 
     match loaderType:
+        case ConfigLoaderType.LocalFile:
+            return PIAWireguardConfigFileLoader(loaderArgs)
         case _:
             raise ValueError(f"No loader class type defined for enum {loaderType}.")
 
