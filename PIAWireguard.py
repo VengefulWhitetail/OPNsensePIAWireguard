@@ -41,6 +41,35 @@ from enum import Enum
 # Please see PIAWireguard.json for configuration settings
 #
 
+class ConfigLoaderType(Enum):
+    LocalFile = 0
+
+class PIAWireguardConfigLoader(ABC):
+
+    @abstractmethod
+    def is_data_valid(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_json_config(self) -> str:
+        pass
+
+class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
+    def __init__(self, path: str):
+        self.path = os.path.join(sys.path[0], path)
+
+    def is_data_valid(self) -> bool:
+        return os.path.isfile(self.path)
+
+    def get_json_config(self) -> str:
+        with open(self.path, 'r') as f:
+            return f.read()
+
+# Factory method to create a config loader from loader data file
+def get_loader(path: str) -> PIAWireguardConfigLoader:
+    pass
+
+
 #
 # Script Start
 #
@@ -258,34 +287,6 @@ class State:
     metaIp = ''
     wgCn = ''
     wgIp = ''
-
-class ConfigLoaderType(Enum):
-    LocalFile = 0
-
-class PIAWireguardConfigLoader(ABC):
-
-    @abstractmethod
-    def is_data_valid(self) -> bool:
-        pass
-
-    @abstractmethod
-    def get_json_config(self) -> str:
-        pass
-
-class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
-    def __init__(self, path: str):
-        self.path = os.path.join(sys.path[0], path)
-
-    def is_data_valid(self) -> bool:
-        return os.path.isfile(self.path)
-
-    def get_json_config(self) -> str:
-        with open(self.path, 'r') as f:
-            return f.read()
-
-# Factory method to create a config loader from loader data file
-def get_loader(path: str) -> PIAWireguardConfigLoader:
-    pass
 
 # Fixes bug in python requests where this env is preferred over Verify=False
 if 'REQUESTS_CA_BUNDLE' in os.environ:
