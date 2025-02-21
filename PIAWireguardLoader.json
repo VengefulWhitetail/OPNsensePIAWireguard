@@ -2,6 +2,7 @@
     "loaderType": 0,
     "arguments":
     [
-      "/path/to/your/config"
+      "Argument Value 0",
+      "Argument Value 1"
     ]
 }
