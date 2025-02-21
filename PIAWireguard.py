@@ -86,7 +86,10 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
             sys.exit(1)
 
     loaderArgs = loaderJSON['arguments']
-    pass
+
+    match loaderType:
+        case _:
+            raise ValueError(f"No loader class type defined for enum {loaderType}.")
 
 #
 # Script Start
