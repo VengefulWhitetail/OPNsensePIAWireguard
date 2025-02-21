@@ -308,15 +308,15 @@ if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
 
 # Create our loader from loader data file
-loaderFile = os.path.join(sys.path[0], "PIAWireguardLoader.json")
-if not os.path.isfile(loaderFile):
-    logger.error(f"Failed to find loader config file {loaderFile}")
+loaderPath = os.path.join(sys.path[0], "PIAWireguardLoader.json")
+if not os.path.isfile(loaderPath):
+    logger.error(f"Failed to find loader config file {loaderPath}")
     sys.exit(1)
 
 # Create loader from loader data file
 try:
-    loader = get_loader(loaderFile)
-    logger.debug(f"Config loader of type {loader.__class__.__name__} successfully created from {loaderFile}")
+    loader = get_loader(loaderPath)
+    logger.debug(f"Config loader of type {loader.__class__.__name__} successfully created from {loaderPath}")
 
     if loader.is_data_valid():
         # Import our config file
@@ -329,7 +329,7 @@ try:
         logger.error(f"Invalid config data reported from {loader}")
         sys.exit(1)
 except ValueError as e:
-    logger.error(f"Failed to create loader from config file {loaderFile} error: {str(e)}")
+    logger.error(f"Failed to create loader from config file {loaderPath} error: {str(e)}")
     sys.exit(1)
 
 # Validate our config
