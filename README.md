@@ -41,11 +41,15 @@ You can also create a CRON job, allowing you to manually change the PIA server y
      1. Click `Save`
  1. SSH to OPNsense and drop in to a terminal via `option 8`.
  1. As `root`, run the below commands:
-     - `fetch -o /conf https://raw.githubusercontent.com/FingerlessGlov3s/OPNsensePIAWireguard/main/PIAWireguard.py`
-     - `fetch -o /conf https://raw.githubusercontent.com/FingerlessGlov3s/OPNsensePIAWireguard/main/ca.rsa.4096.crt`
-     - `fetch -o /usr/local/opnsense/service/conf/actions.d https://raw.githubusercontent.com/FingerlessGlov3s/OPNsensePIAWireguard/main/actions_piawireguard.conf`
+     - `fetch -o /conf https://raw.githubusercontent.com/VengefulWhitetail/OPNsensePIAWireguard/main/PIAWireguard.py`
+     - `fetch -o /conf https://raw.githubusercontent.com/VengefulWhitetail/OPNsensePIAWireguard/main/ca.rsa.4096.crt`
+     - `fetch -o /usr/local/opnsense/service/conf/actions.d https://raw.githubusercontent.com/VengefulWhitetail/OPNsensePIAWireguard/main/actions_piawireguard.conf`
  1. Download the latest Release from GitHub to your computer, to ensure it's a stable release
     1. https://github.com/FingerlessGlov3s/OPNsensePIAWireguard/releases
+ 1. Edit the `PIAWireguardLoader.json` file using Notepad++ or your favourite IDE.
+    1. The following variables need to be filled in:
+        - `loaderType` How to load the configuration data. Refer to `ConfigLoaderType` within `PIAWireguard.py` for different values. May be stored as an integer (`0`), a string integer (`"0"`), or the enum value name (`"LocalFile"`). If you're hosting the configuration file locally on the OPNSense system, leave this as `0`.
+        - `arguments` Array of string parameters needed to load the configuration data. Refer to the specific `PIAWireguardConfigLoader` subclass within `PIAWireguard.py` for how many arguments to use and in what order. If you're hosting the configuration file locally on the OPNSense system, set a single parameter equal to the file path relative to `sys.path[0]`.
  1. Edit the `PIAWireguard.json` file using Notepad++ or your favourite IDE.
     1. The following variables need to be filled in:
         - `opnsenseURL` Should only need to change this if you use a different `TCP Port` for the WebUI or changed the `Listen Interfaces`, the provided URL is correct if you've left those unchanged.
