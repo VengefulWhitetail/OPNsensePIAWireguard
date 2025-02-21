@@ -313,12 +313,12 @@ if not os.path.isfile(loaderFile):
     logger.error(f"Failed to find loader config file {loaderFile}")
     sys.exit(1)
 
-loader = get_loader(loaderFile)
-
-# Import our config file
+# Create loader from loader data file
 try:
-    configFile = PIAWireguardConfigFileLoader("PIAWireguard.json")
+    configFile = get_loader(loaderFile)
+
     if configFile.is_data_valid():
+        # Import our config file
         try:
             config = json.loads(configFile.get_json_config(), object_pairs_hook=CheckForDupKey)
         except ValueError as e:
