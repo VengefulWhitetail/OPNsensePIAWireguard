@@ -283,6 +283,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         with open(self.path, 'r') as f:
             return f.read()
 
+# Factory method to create a config loader from loader data file
 def get_loader(path: str) -> PIAWireguardConfigLoader:
     if not os.path.isfile(path):
         logger.error(f"Failed to load config file {configFile}")
