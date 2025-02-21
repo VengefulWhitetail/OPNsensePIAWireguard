@@ -38,27 +38,44 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 #
-# Please see PIAWireguard.json for configuration settings
+# Please see PIAWireguard.json and PIAWireguardLoader.json for configuration settings
 #
 
 class ConfigLoaderType(Enum):
+    """Enum class defining types of configuration loaders.
+
+    Stored in PIAWireguardLoader.json under the key "loaderType". May be stored as an integer or name."""
     LocalFile = 0
+    """Reads configuration from a locally stored file."""
+# --- more type enum entries go here ---
 
 class PIAWireguardConfigLoader(ABC):
+    """Abstract base class of configuration loaders."""
     @abstractmethod
     def __init__(self, loader_args: list[str]):
+        """When implemented in subclasses, initializes the loader.
+
+        Arguments:
+            loader_args: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be."""
         pass
 
     @abstractmethod
     def is_data_valid(self) -> bool:
+        """When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
+
+        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist)"""
         pass
 
     @abstractmethod
     def get_json_config(self) -> str:
+        """When implemented in subclasses, gets the JSON configuration data in string form as specified by PIAWireguard.json"""
         pass
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
+    """Configuration loader which reads from a local file"""
     def __init__(self, loader_args: list[str]):
+        """Argument uses:
+            0: File name"""
         self.path = os.path.join(sys.path[0], loader_args[0])
 
     def is_data_valid(self) -> bool:
@@ -68,8 +85,10 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         with open(self.path, 'r') as f:
             return f.read()
 
-# Factory method to create a config loader from loader data file
+# --- more PIAWireguardConfigLoader-derived class types go here ---
+
 def get_loader(path: str) -> PIAWireguardConfigLoader:
+    """Factory method to create a config loader from loader data file"""
     with open(path, 'r') as f:
         loaderJSON = json.loads(f.read())
 
@@ -93,6 +112,7 @@ def get_loader(path: str) -> PIAWireguardConfigLoader:
     match loaderType:
         case ConfigLoaderType.LocalFile:
             return PIAWireguardConfigFileLoader(loaderArgs)
+# --- more case matches on other loader enums and class types go here ---
         case _:
             raise ValueError(f"No loader class type defined for enum {loaderType}.")
 
