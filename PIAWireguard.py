@@ -315,20 +315,20 @@ if not os.path.isfile(loaderFile):
 
 # Create loader from loader data file
 try:
-    configFile = get_loader(loaderFile)
+    loader = get_loader(loaderFile)
 
-    if configFile.is_data_valid():
+    if loader.is_data_valid():
         # Import our config file
         try:
-            config = json.loads(configFile.get_json_config(), object_pairs_hook=CheckForDupKey)
+            config = json.loads(loader.get_json_config(), object_pairs_hook=CheckForDupKey)
         except ValueError as e:
-            logger.error(f"Failed to load config file {configFile}")
+            logger.error(f"Failed to load config file {loader}")
             sys.exit(1)
     else:
-        logger.error(f"Invalid config file {configFile}")
+        logger.error(f"Invalid config file {loader}")
         sys.exit(1)
 except ValueError as e:
-    logger.error(f"Failed to import config file {configFile} error: {str(e)}")
+    logger.error(f"Failed to import config file {loader} error: {str(e)}")
     sys.exit(1)
 
 # Validate our config
