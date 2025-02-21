@@ -316,7 +316,7 @@ if not os.path.isfile(loaderFile):
 # Create loader from loader data file
 try:
     loader = get_loader(loaderFile)
-    logger.debug(f"Config loader successfully created from {loaderFile}")
+    logger.debug(f"Config loader of type {loader.__class__.__name__} successfully created from {loaderFile}")
 
     if loader.is_data_valid():
         # Import our config file
