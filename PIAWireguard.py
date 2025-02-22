@@ -261,6 +261,18 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         with open(self.path, 'r') as f:
             return f.read()
 
+class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
+
+    def __init__(self, loader_args: list[str]):
+        pass
+
+    def is_data_valid(self) -> bool:
+        return False
+
+    def get_json_config(self) -> str:
+        return ""
+
+
 # --- more PIAWireguardConfigLoader-derived class types go here ---
 
 def get_loader(path: str) -> PIAWireguardConfigLoader:
