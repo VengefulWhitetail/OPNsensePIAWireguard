@@ -47,23 +47,29 @@ class ConfigLoaderType(Enum):
     Stored in PIAWireguardLoader.json under the key "loaderType". May be stored as an integer or name."""
     LocalFile = 0
     """Reads configuration from a locally stored file."""
+
+    NetworkURI = 1
+    """Reads configuration from a network URI"""
 # --- more type enum entries go here ---
 
 class PIAWireguardConfigLoader(ABC):
     """Abstract base class of configuration loaders."""
     @abstractmethod
     def __init__(self, loader_args: list[str]):
-        """When implemented in subclasses, initializes the loader.
+        """
+        When implemented in subclasses, initializes the loader.
 
         Arguments:
-            loader_args: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be."""
+            loader_args: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
+        """
         pass
 
     @abstractmethod
     def is_data_valid(self) -> bool:
-        """When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
-
-        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist)"""
+        """
+        When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
+        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist).
+        """
         pass
 
     @abstractmethod
@@ -74,8 +80,10 @@ class PIAWireguardConfigLoader(ABC):
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     """Configuration loader which reads from a local file"""
     def __init__(self, loader_args: list[str]):
-        """Argument uses:
-            0: File name relative to sys.path[0]"""
+        """
+        Arguments expected:
+            0: File name relative to sys.path[0]
+        """
         self.path = os.path.join(sys.path[0], loader_args[0])
 
     def is_data_valid(self) -> bool:
