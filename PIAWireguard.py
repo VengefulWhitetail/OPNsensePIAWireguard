@@ -104,7 +104,7 @@ def CheckForDupKey(ordered_pairs):
 def CreateRequestsSession(auth, headers, verify = True):
     session = requests.Session()
     session.auth = auth
-    session.headers.update({'User-Agent': 'Github: FingerlessGlov3s/OPNsensePIAWireguard'})
+    session.headers.update({'User-Agent': 'Github: VengefulWhitetail/OPNsensePIAWireguard'})
     if headers is not None:
         session.headers.update(headers)
     session.verify = verify # As we're connecting via local loopback we don't really need to check the certificate.
