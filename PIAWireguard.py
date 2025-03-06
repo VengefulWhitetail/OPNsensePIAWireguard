@@ -293,6 +293,28 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             root = ElementTree.fromstring(f.read())
             cert_elements = root.findall("cert")
 
+            for cert_element in cert_elements:
+                if cert_element.attrib['uuid'] != client_cert_ids['uuid']:
+                    continue
+
+                ref_id_element = cert_element.find('refid')
+                if ref_id_element is None or ref_id_element.text != client_cert_ids['refid']:
+                    continue
+
+                description_element = cert_element.find('descr')
+                if description_element is None or description_element.text != client_cert_ids['descr']:
+                    continue
+
+                cert_text_element = cert_element.find('crt')
+                if cert_text_element is not None:
+                    self.cert = cert_text_element.text
+
+                private_key_element = cert_element.find('prv')
+                if private_key_element is not None:
+                    self.private_key = private_key_element.text
+
+                break
+
 
     def is_data_valid(self) -> bool:
         return False
