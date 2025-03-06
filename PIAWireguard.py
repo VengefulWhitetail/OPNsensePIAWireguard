@@ -36,6 +36,7 @@ import secrets
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from xml.etree import ElementTree as ElementTree
 
 #
 # Please see PIAWireguard.json and PIAWireguardLoader.json for configuration settings
@@ -289,7 +290,8 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 break
 
         with open("/conf/config.xml") as f:
-            pass
+            root = ElementTree.fromstring(f.read())
+            cert_elements = root.findall("cert")
 
 
     def is_data_valid(self) -> bool:
