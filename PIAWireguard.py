@@ -288,6 +288,10 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 client_cert_ids['commonname'] = api_cert['commonname']
                 break
 
+        with open("/conf/config.xml") as f:
+            pass
+
+
     def is_data_valid(self) -> bool:
         return False
 
