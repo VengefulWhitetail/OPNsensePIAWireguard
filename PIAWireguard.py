@@ -336,9 +336,12 @@ def create_loader(path: str) -> PIAWireguardConfigLoader:
 
     try:
         loaderType = ConfigLoaderType(int(loaderJSON["loaderType"]))
+        logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
     except ValueError:
+        logger.debug("Unable to parse loader type value as int. Attempting to parse as string...")
         try:
             loaderType = ConfigLoaderType[loaderJSON["loaderType"]]
+            logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
         except KeyError:
             logger.error(f"Unable to parse required key: loaderType in {path}. The value is either not correctly formatted or has an undefined value.")
             sys.exit(1)
