@@ -334,9 +334,6 @@ def create_loader(path: str) -> PIAWireguardConfigLoader:
     if "loaderType" not in loaderJSON:
         raise ValueError("Loader config data missing required key: loaderType")
 
-    if "arguments" not in loaderJSON:
-        raise ValueError("Loader config data missing required key: arguments")
-
     try:
         loaderType = ConfigLoaderType(int(loaderJSON["loaderType"]))
     except ValueError:
@@ -345,6 +342,9 @@ def create_loader(path: str) -> PIAWireguardConfigLoader:
         except KeyError:
             logger.error(f"Unable to parse required key: loaderType in {path}. The value is either not correctly formatted or has an undefined value.")
             sys.exit(1)
+
+    if "arguments" not in loaderJSON:
+        raise ValueError("Loader config data missing required key: arguments")
 
     loaderArgs = loaderJSON['arguments']
 
