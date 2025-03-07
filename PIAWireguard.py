@@ -325,7 +325,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
 # --- more PIAWireguardConfigLoader-derived class types go here ---
 
-def get_loader(path: str) -> PIAWireguardConfigLoader:
+def create_loader(path: str) -> PIAWireguardConfigLoader:
     """Factory method to create a config loader from loader data file"""
     with open(path, 'r') as f:
         loaderJSON = json.loads(f.read())
@@ -433,7 +433,7 @@ if not os.path.isfile(loaderPath):
 
 # Create loader from loader data file
 try:
-    loader = get_loader(loaderPath)
+    loader = create_loader(loaderPath)
     logger.debug(f"Config loader of type {loader.__class__.__name__} successfully created from {loaderPath}")
 
     if loader.is_data_valid():
