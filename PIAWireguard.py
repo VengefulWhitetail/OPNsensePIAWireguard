@@ -290,7 +290,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 client_cert_ids['commonname'] = api_cert['commonname']
                 break
 
-        with open("/conf/config.xml") as f:
+        with open("/conf/config.xml", 'r') as f:
             root = ElementTree.fromstring(f.read())
             cert_elements = root.findall("cert")
 
