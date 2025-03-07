@@ -272,9 +272,9 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             2: OPNSense API secret
             3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
         """
-        api_key = loader_args[0]
-        api_secret = loader_args[1]
-        client_cert_identifier = loader_args[2]
+        api_key = loader_args[1]
+        api_secret = loader_args[2]
+        client_cert_identifier = loader_args[3]
 
         api_cert_session = CreateRequestsSession((api_key, api_secret), None, False)
         api_certs_request = GetRequest(api_cert_session, f"{loader_args[0]}/api/trust/cert/search")
