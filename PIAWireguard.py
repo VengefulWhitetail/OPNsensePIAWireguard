@@ -267,16 +267,17 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
     def __init__(self, loader_args: list[str]):
         """
         Arguments expected:
-            0: OPNSense API key
-            1: OPNSense API secret
-            2: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
+            0: OPNSense base URL
+            1: OPNSense API key
+            2: OPNSense API secret
+            3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
         """
         api_key = loader_args[0]
         api_secret = loader_args[1]
         client_cert_identifier = loader_args[2]
 
         api_cert_session = CreateRequestsSession((api_key, api_secret), None, False)
-        api_certs_request = GetRequest(api_cert_session, "https://127.0.0.1:443/api/trust/cert/search")
+        api_certs_request = GetRequest(api_cert_session, f"{loader_args[0]}/api/trust/cert/search")
         api_certs = api_certs_request.json()['rows']
 
         client_cert_ids = {}
