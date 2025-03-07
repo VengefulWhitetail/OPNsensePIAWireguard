@@ -263,7 +263,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
             return f.read()
 
 class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
-
+    """Configuration loader which pulls a config from a URI"""
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
@@ -298,21 +298,21 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 if certElement.attrib['uuid'] != clientCertIDs['uuid']:
                     continue
 
-                ref_id_element = certElement.find('refid')
-                if ref_id_element is None or ref_id_element.text != clientCertIDs['refid']:
+                refIDElement = certElement.find('refid')
+                if refIDElement is None or refIDElement.text != clientCertIDs['refid']:
                     continue
 
-                description_element = certElement.find('descr')
-                if description_element is None or description_element.text != clientCertIDs['descr']:
+                descriptionElement = certElement.find('descr')
+                if descriptionElement is None or descriptionElement.text != clientCertIDs['descr']:
                     continue
 
-                cert_text_element = certElement.find('crt')
-                if cert_text_element is not None:
-                    self.cert = cert_text_element.text
+                certTextElement = certElement.find('crt')
+                if certTextElement is not None:
+                    self.Certificate = certTextElement.text
 
-                private_key_element = certElement.find('prv')
-                if private_key_element is not None:
-                    self.private_key = private_key_element.text
+                privateKeyElement = certElement.find('prv')
+                if privateKeyElement is not None:
+                    self.Key = privateKeyElement.text
 
                 break
 
