@@ -224,12 +224,12 @@ class ConfigLoaderType(Enum):
 class PIAWireguardConfigLoader(ABC):
     """Abstract base class of configuration loaders."""
     @abstractmethod
-    def __init__(self, loader_args: list[str]):
+    def __init__(self, loaderArgs: list[str]):
         """
         When implemented in subclasses, initializes the loader.
 
         Arguments:
-            loader_args: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
+            loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
         """
         pass
 
@@ -248,12 +248,12 @@ class PIAWireguardConfigLoader(ABC):
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     """Configuration loader which reads from a local file"""
-    def __init__(self, loader_args: list[str]):
+    def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
             0: File name relative to sys.path[0]
         """
-        self.path = os.path.join(sys.path[0], loader_args[0])
+        self.path = os.path.join(sys.path[0], loaderArgs[0])
 
     def is_data_valid(self) -> bool:
         return os.path.isfile(self.path)
@@ -264,7 +264,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 
 class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
-    def __init__(self, loader_args: list[str]):
+    def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
             0: OPNSense base URL
@@ -272,45 +272,45 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             2: OPNSense API secret
             3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
         """
-        api_key = loader_args[1]
-        api_secret = loader_args[2]
-        client_cert_identifier = loader_args[3]
+        apiKey = loaderArgs[1]
+        apiSecret = loaderArgs[2]
+        clientCertIdentifier = loaderArgs[3]
 
-        api_cert_session = CreateRequestsSession((api_key, api_secret), None, False)
-        api_certs_request = GetRequest(api_cert_session, f"{loader_args[0]}/api/trust/cert/search")
-        api_certs = api_certs_request.json()['rows']
+        apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
+        apiCertsRequest = GetRequest(apiCertSession, f"{loaderArgs[0]}/api/trust/cert/search")
+        apiCerts = apiCertsRequest.json()['rows']
 
-        client_cert_ids = {}
-        for api_cert in api_certs:
-            if (api_cert['uuid'] == client_cert_identifier or api_cert['refid'] == client_cert_identifier or
-                    api_cert['descr'] == client_cert_identifier or api_cert['commonname'] == client_cert_identifier):
-                client_cert_ids['uuid'] = api_cert['uuid']
-                client_cert_ids['refid'] = api_cert['refid']
-                client_cert_ids['descr'] = api_cert['descr']
-                client_cert_ids['commonname'] = api_cert['commonname']
+        clientCertIDs = {}
+        for apiCert in apiCerts:
+            if (apiCert['uuid'] == clientCertIdentifier or apiCert['refid'] == clientCertIdentifier or
+                    apiCert['descr'] == clientCertIdentifier or apiCert['commonname'] == clientCertIdentifier):
+                clientCertIDs['uuid'] = apiCert['uuid']
+                clientCertIDs['refid'] = apiCert['refid']
+                clientCertIDs['descr'] = apiCert['descr']
+                clientCertIDs['commonname'] = apiCert['commonname']
                 break
 
         with open("/conf/config.xml", 'r') as f:
             root = ElementTree.fromstring(f.read())
-            cert_elements = root.findall("cert")
+            certElements = root.findall("cert")
 
-            for cert_element in cert_elements:
-                if cert_element.attrib['uuid'] != client_cert_ids['uuid']:
+            for certElement in certElements:
+                if certElement.attrib['uuid'] != clientCertIDs['uuid']:
                     continue
 
-                ref_id_element = cert_element.find('refid')
-                if ref_id_element is None or ref_id_element.text != client_cert_ids['refid']:
+                ref_id_element = certElement.find('refid')
+                if ref_id_element is None or ref_id_element.text != clientCertIDs['refid']:
                     continue
 
-                description_element = cert_element.find('descr')
-                if description_element is None or description_element.text != client_cert_ids['descr']:
+                description_element = certElement.find('descr')
+                if description_element is None or description_element.text != clientCertIDs['descr']:
                     continue
 
-                cert_text_element = cert_element.find('crt')
+                cert_text_element = certElement.find('crt')
                 if cert_text_element is not None:
                     self.cert = cert_text_element.text
 
-                private_key_element = cert_element.find('prv')
+                private_key_element = certElement.find('prv')
                 if private_key_element is not None:
                     self.private_key = private_key_element.text
 
