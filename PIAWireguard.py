@@ -54,7 +54,7 @@ class ConfigLoaderType(Enum):
     NetworkURI = 1
     """Reads configuration from a network URI"""
 
-# --- more type enum entries go here ---
+    # --- more type enum entries go here ---
 
 
 class PIAWireguardConfigLoader(ABC):
