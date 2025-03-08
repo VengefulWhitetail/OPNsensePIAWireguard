@@ -315,9 +315,17 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 if certTextElement is not None:
                     self.Certificate = certTextElement.text
 
+                else:
+                    logger.critical("Could not find X.509 certificate in OPNSense configuration. This should not happen!")
+                    sys.exit(1)
+
                 privateKeyElement = certElement.find('prv')
                 if privateKeyElement is not None:
                     self.Key = privateKeyElement.text
+
+                else:
+                    logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
+                    sys.exit(1)
 
                 break
 
