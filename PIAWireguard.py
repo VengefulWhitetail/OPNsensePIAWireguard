@@ -59,12 +59,6 @@ class ConfigLoaderType(Enum):
 
 class PIAWireguardConfigLoader(ABC):
     """Abstract base class of configuration loaders."""
-    @abstractmethod
-    def get_loader_type(self) -> ConfigLoaderType:
-        """
-        When implemented in subclasses, returns the ConfigLoaderType enum value associated with this class.
-        """
-        pass
 
     @abstractmethod
     def __init__(self, loaderArgs: list[str]):
@@ -73,6 +67,13 @@ class PIAWireguardConfigLoader(ABC):
 
         Arguments:
             loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the arguments expected and what each one is supposed to be.
+        """
+        pass
+
+    @abstractmethod
+    def get_loader_type(self) -> ConfigLoaderType:
+        """
+        When implemented in subclasses, returns the ConfigLoaderType enum value associated with this class.
         """
         pass
 
