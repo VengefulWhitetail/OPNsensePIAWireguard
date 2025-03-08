@@ -285,8 +285,14 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
         apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
         apiCertsRequest = GetRequest(apiCertSession, f"{opnsenseURL}/api/trust/cert/search")
-        apiCerts = apiCertsRequest.json()['rows']
 
+        try:
+            apiCerts = apiCertsRequest.json()['rows']
+        except ValueError:
+            logger.error("Unable to retrieve X.509 certificates (are the API key and secret correct?)")
+            sys.exit(1)
+
+        logger.debug("Successfully retrieved X.509 certificates. Searching for match to identifier...")
         clientCertIDs = {}
         for apiCert in apiCerts:
             if (apiCert['uuid'] == clientCertIdentifier or apiCert['refid'] == clientCertIdentifier or
@@ -294,11 +300,11 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 clientCertIDs['uuid'] = apiCert['uuid']
                 clientCertIDs['refid'] = apiCert['refid']
                 clientCertIDs['descr'] = apiCert['descr']
-                clientCertIDs['commonname'] = apiCert['commonname']
+                logger.debug(f"Successfully matched certificate to identifier \"{clientCertIdentifier}\"")
                 break
 
         if len(clientCertIDs) == 0:
-            logger.error(f"No match to identifier \"{clientCertIdentifier}\" found in certificates.")
+            logger.error(f"No match to identifier \"{clientCertIdentifier}\" found in certificates (is the identifier correct?)")
             sys.exit(1)
 
         with open("/conf/config.xml", 'r') as f:
@@ -319,6 +325,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 certTextElement = certElement.find('crt')
                 if certTextElement is not None:
+                    logger.debug("Parsing Base64-encoded X.509 certificate data...")
                     try:
                         certificateBytes = base64.b64decode(certTextElement.text)
 
@@ -326,7 +333,9 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                         logger.critical("Invalid Base-64 certificate data. The certificate cannot be parsed. This should not happen!")
                         sys.exit(1)
 
+                    logger.debug("Successfully parsed X.509 certificate data from Base-64 encoding. Loading certificate...")
                     self.Certificate = load_pem_x509_certificate(certificateBytes)
+                    logger.debug("Successfully loaded X.509 certificate")
 
                 else:
                     logger.critical("Could not find X.509 certificate in OPNSense configuration. This should not happen!")
@@ -334,6 +343,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 privateKeyElement = certElement.find('prv')
                 if privateKeyElement is not None:
+                    logger.debug("Parsing Base64-encoded private key data...")
                     try:
                         keyBytes = base64.b64decode(privateKeyElement.text)
 
@@ -341,7 +351,9 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                         logger.critical("Invalid Base-64 key data. The key cannot be parsed. This should not happen!")
                         sys.exit(1)
 
+                    logger.debug("Successfully parsed private key data from Base-64 encoding. Loading key...")
                     self.Key = load_pem_private_key(keyBytes, password=None)
+                    logger.debug("Successfully loaded private key")
 
                 else:
                     logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
