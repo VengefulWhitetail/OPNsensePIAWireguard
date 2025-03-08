@@ -35,6 +35,7 @@ import urllib3
 import secrets
 
 from abc import ABC, abstractmethod
+from cryptography.x509 import load_pem_x509_certificate
 from enum import Enum
 from xml.etree import ElementTree as ElementTree
 
@@ -313,7 +314,14 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 certTextElement = certElement.find('crt')
                 if certTextElement is not None:
-                    self.Certificate = certTextElement.text
+                    try:
+                        certificateBytes = base64.b64decode(certTextElement.text)
+
+                    except TypeError:
+                        logger.critical("Invalid Base-64 certificate data. The certificate cannot be parsed. This should not happen!")
+                        sys.exit(1)
+
+                    self.Certificate = load_pem_x509_certificate(certificateBytes)
 
                 else:
                     logger.critical("Could not find X.509 certificate in OPNSense configuration. This should not happen!")
