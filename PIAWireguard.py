@@ -297,6 +297,10 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 clientCertIDs['commonname'] = apiCert['commonname']
                 break
 
+        if len(clientCertIDs) == 0:
+            logger.error(f"No match to identifier \"{clientCertIdentifier}\" found in certificates.")
+            sys.exit(1)
+
         with open("/conf/config.xml", 'r') as f:
             root = ElementTree.fromstring(f.read())
             certElements = root.findall("cert")
