@@ -36,7 +36,7 @@ import secrets
 
 from abc import ABC, abstractmethod
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509 import load_pem_x509_certificate
+from cryptography.x509 import load_pem_x509_certificate, ExtendedKeyUsage, OID_CLIENT_AUTH
 from enum import Enum
 from xml.etree import ElementTree as ElementTree
 
@@ -347,7 +347,13 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
 
     def is_data_valid(self) -> bool:
-        return False
+        if self.Certificate is None or self.Key is None:
+            return False
+
+        if OID_CLIENT_AUTH not in self.Certificate.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+            return False
+
+        return self.Certificate.public_key().public_numbers() == self.Key.public_key().public_numbers()
 
     def get_json_config(self) -> str:
         return ""
