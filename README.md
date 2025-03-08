@@ -35,9 +35,9 @@ You can also create a CRON job, allowing you to manually change the PIA server y
      1. Scroll down to you see `Effective Privileges`, you want to give it the following permissions:
          - `Firewall: Alias: Edit`
          - `Firewall: Aliases`
+         - `System: Certificate Manager`
          - `System: Static Routes`
          - `VPN: Wireguard`
-         - `System: Certificate Manager`
      1. Click the `Plus` sign on `API Keys`, it'll download the keys in a txt file. We'll leverage this later.
      1. Click `Save`
  1. SSH to OPNsense and drop in to a terminal via `option 8`.
