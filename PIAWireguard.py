@@ -35,6 +35,7 @@ import urllib3
 import secrets
 
 from abc import ABC, abstractmethod
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509 import load_pem_x509_certificate
 from enum import Enum
 from xml.etree import ElementTree as ElementTree
@@ -329,7 +330,14 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 privateKeyElement = certElement.find('prv')
                 if privateKeyElement is not None:
-                    self.Key = privateKeyElement.text
+                    try:
+                        keyBytes = base64.b64decode(privateKeyElement.text)
+
+                    except TypeError:
+                        logger.critical("Invalid Base-64 key data. The key cannot be parsed. This should not happen!")
+                        sys.exit(1)
+
+                    self.Key = load_pem_private_key(keyBytes, password=None)
 
                 else:
                     logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
