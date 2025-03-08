@@ -264,7 +264,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
             return f.read()
 
 class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
-    """Configuration loader which pulls a config from a URI"""
+    """Configuration loader which pulls a config from a URI using an X.509 client certificate"""
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
