@@ -72,7 +72,7 @@ class PIAWireguardConfigLoader(ABC):
         When implemented in subclasses, initializes the loader.
 
         Arguments:
-            loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
+            loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the arguments expected and what each one is supposed to be.
         """
         pass
 
@@ -80,7 +80,8 @@ class PIAWireguardConfigLoader(ABC):
     def is_data_valid(self) -> bool:
         """
         When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
-        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist).
+        Use this to stop execution if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist).
+        Do NOT use this method to validate the JSON configuration output.
         """
         pass
 
@@ -111,7 +112,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
-            0: OPNSense base URL
+            0: OPNSense API base URL
             1: OPNSense API key
             2: OPNSense API secret
             3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
