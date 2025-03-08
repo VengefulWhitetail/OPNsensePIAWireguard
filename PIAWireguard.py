@@ -44,6 +44,207 @@ from xml.etree import ElementTree as ElementTree
 # Please see PIAWireguard.json and PIAWireguardLoader.json for configuration settings
 #
 
+class ConfigLoaderType(Enum):
+    """Enum class defining types of configuration loaders.
+
+    Stored in PIAWireguardLoader.json under the key "loaderType". May be stored as an integer or name."""
+    LocalFile = 0
+    """Reads configuration from a locally stored file."""
+
+    NetworkURI = 1
+    """Reads configuration from a network URI"""
+
+# --- more type enum entries go here ---
+
+
+class PIAWireguardConfigLoader(ABC):
+    """Abstract base class of configuration loaders."""
+    @abstractmethod
+    def __init__(self, loaderArgs: list[str]):
+        """
+        When implemented in subclasses, initializes the loader.
+
+        Arguments:
+            loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
+        """
+        pass
+
+    @abstractmethod
+    def is_data_valid(self) -> bool:
+        """
+        When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
+        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist).
+        """
+        pass
+
+    @abstractmethod
+    def get_json_config(self) -> str:
+        """When implemented in subclasses, gets the JSON configuration data in string form as specified by PIAWireguard.json"""
+        pass
+
+
+class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
+    """Configuration loader which reads from a local file"""
+    def __init__(self, loaderArgs: list[str]):
+        """
+        Arguments expected:
+            0: File name relative to sys.path[0]
+        """
+        self.path = os.path.join(sys.path[0], loaderArgs[0])
+
+    def is_data_valid(self) -> bool:
+        return os.path.isfile(self.path)
+
+    def get_json_config(self) -> str:
+        with open(self.path, 'r') as f:
+            return f.read()
+
+class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
+    """Configuration loader which pulls a config from a URI using an X.509 client certificate"""
+    def __init__(self, loaderArgs: list[str]):
+        """
+        Arguments expected:
+            0: OPNSense base URL
+            1: OPNSense API key
+            2: OPNSense API secret
+            3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
+        """
+        opnsenseURL = loaderArgs[0]
+        logger.debug(f"Argument 0 (OPNSense URL): {opnsenseURL}")
+        apiKey = loaderArgs[1]
+        logger.debug(f"Argument 1 (OPNSense API key): {apiKey}")
+        apiSecret = loaderArgs[2]
+        logger.debug(f"Argument 2 (OPNSense API secret): {apiSecret}")
+        clientCertIdentifier = loaderArgs[3]
+        logger.debug(f"Argument 3 (X.509 Certificate Identifier): {clientCertIdentifier}")
+
+        apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
+        apiCertsRequest = GetRequest(apiCertSession, f"{opnsenseURL}/api/trust/cert/search")
+
+        try:
+            apiCerts = apiCertsRequest.json()['rows']
+        except ValueError:
+            logger.error("Unable to retrieve X.509 certificates (are the API key and secret correct?)")
+            sys.exit(1)
+
+        logger.debug("Successfully retrieved X.509 certificates. Searching for match to identifier...")
+        clientCertIDs = {}
+        for apiCert in apiCerts:
+            if (apiCert['uuid'] == clientCertIdentifier or apiCert['refid'] == clientCertIdentifier or
+                    apiCert['descr'] == clientCertIdentifier or apiCert['commonname'] == clientCertIdentifier):
+                clientCertIDs['uuid'] = apiCert['uuid']
+                clientCertIDs['refid'] = apiCert['refid']
+                clientCertIDs['descr'] = apiCert['descr']
+                logger.debug(f"Successfully matched certificate to identifier \"{clientCertIdentifier}\"")
+                break
+
+        if len(clientCertIDs) == 0:
+            logger.error(f"No match to identifier \"{clientCertIdentifier}\" found in certificates (is the identifier correct?)")
+            sys.exit(1)
+
+        with open("/conf/config.xml", 'r') as f:
+            root = ElementTree.fromstring(f.read())
+            certElements = root.findall("cert")
+
+            for certElement in certElements:
+                if certElement.attrib['uuid'] != clientCertIDs['uuid']:
+                    continue
+
+                refIDElement = certElement.find('refid')
+                if refIDElement is None or refIDElement.text != clientCertIDs['refid']:
+                    continue
+
+                descriptionElement = certElement.find('descr')
+                if descriptionElement is None or descriptionElement.text != clientCertIDs['descr']:
+                    continue
+
+                certTextElement = certElement.find('crt')
+                if certTextElement is not None:
+                    logger.debug("Parsing Base64-encoded X.509 certificate data...")
+                    try:
+                        certificateBytes = base64.b64decode(certTextElement.text)
+
+                    except TypeError:
+                        logger.critical("Invalid Base-64 certificate data. The certificate cannot be parsed. This should not happen!")
+                        sys.exit(1)
+
+                    logger.debug("Successfully parsed X.509 certificate data from Base-64 encoding. Loading certificate...")
+                    self.Certificate = load_pem_x509_certificate(certificateBytes)
+                    logger.debug("Successfully loaded X.509 certificate")
+
+                else:
+                    logger.critical("Could not find X.509 certificate in OPNSense configuration. This should not happen!")
+                    sys.exit(1)
+
+                privateKeyElement = certElement.find('prv')
+                if privateKeyElement is not None:
+                    logger.debug("Parsing Base64-encoded private key data...")
+                    try:
+                        keyBytes = base64.b64decode(privateKeyElement.text)
+
+                    except TypeError:
+                        logger.critical("Invalid Base-64 key data. The key cannot be parsed. This should not happen!")
+                        sys.exit(1)
+
+                    logger.debug("Successfully parsed private key data from Base-64 encoding. Loading key...")
+                    self.Key = load_pem_private_key(keyBytes, password=None)
+                    logger.debug("Successfully loaded private key")
+
+                else:
+                    logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
+                    sys.exit(1)
+
+                break
+
+    def is_data_valid(self) -> bool:
+        if self.Certificate is None or self.Key is None:
+            return False
+
+        if OID_CLIENT_AUTH not in self.Certificate.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+            return False
+
+        return self.Certificate.public_key().public_numbers() == self.Key.public_key().public_numbers()
+
+    def get_json_config(self) -> str:
+        return ""
+
+# --- more config loader implementations go here ---
+
+
+def create_loader(path: str) -> PIAWireguardConfigLoader:
+    """Factory method to create a config loader from loader data file"""
+    with open(path, 'r') as f:
+        loaderJSON = json.loads(f.read())
+
+    if "loaderType" not in loaderJSON:
+        raise ValueError("Loader config data missing required key: loaderType")
+
+    try:
+        loaderType = ConfigLoaderType(int(loaderJSON["loaderType"]))
+        logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
+    except ValueError:
+        logger.debug("Unable to parse loader type value as int. Attempting to parse as string...")
+        try:
+            loaderType = ConfigLoaderType[loaderJSON["loaderType"]]
+            logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
+        except KeyError:
+            logger.error(f"Unable to parse required key: loaderType in {path}. The value is either not correctly formatted or has an undefined value.")
+            sys.exit(1)
+
+    if "arguments" not in loaderJSON:
+        raise ValueError("Loader config data missing required key: arguments")
+
+    loaderArgs = loaderJSON['arguments']
+
+    match loaderType:
+        case ConfigLoaderType.LocalFile:
+            return PIAWireguardConfigFileLoader(loaderArgs)
+        case ConfigLoaderType.NetworkURI:
+            return PIAWireguardConfigURILoader(loaderArgs)
+# --- more case matches on other loader enums and class types go here ---
+        case _:
+            raise ValueError(f"No loader class type defined for enum {loaderType}.")
+
 #
 # Script Start
 #
@@ -211,205 +412,6 @@ def new_getaddrinfo(*args):
         return prv_getaddrinfo(dns_cache[args[0]], *args[1:])
     return prv_getaddrinfo(*args)
 socket.getaddrinfo = new_getaddrinfo
-
-class ConfigLoaderType(Enum):
-    """Enum class defining types of configuration loaders.
-
-    Stored in PIAWireguardLoader.json under the key "loaderType". May be stored as an integer or name."""
-    LocalFile = 0
-    """Reads configuration from a locally stored file."""
-
-    NetworkURI = 1
-    """Reads configuration from a network URI"""
-# --- more type enum entries go here ---
-
-class PIAWireguardConfigLoader(ABC):
-    """Abstract base class of configuration loaders."""
-    @abstractmethod
-    def __init__(self, loaderArgs: list[str]):
-        """
-        When implemented in subclasses, initializes the loader.
-
-        Arguments:
-            loaderArgs: The string array "arguments" found in PIAWireguardLoader.json. The subclass is free to use these arguments however it wishes. For ease of use in writing the corresponding loader config file, specify the number of arguments used and what each one is supposed to be.
-        """
-        pass
-
-    @abstractmethod
-    def is_data_valid(self) -> bool:
-        """
-        When implemented in subclasses, determines if the data can be used to successfully attempt a configuration retrieval.
-        Use this to raise an error if the loader's data would cause a fatal error on attempting a read (e.g. it points to a file that doesn't exist).
-        """
-        pass
-
-    @abstractmethod
-    def get_json_config(self) -> str:
-        """When implemented in subclasses, gets the JSON configuration data in string form as specified by PIAWireguard.json"""
-        pass
-
-class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
-    """Configuration loader which reads from a local file"""
-    def __init__(self, loaderArgs: list[str]):
-        """
-        Arguments expected:
-            0: File name relative to sys.path[0]
-        """
-        self.path = os.path.join(sys.path[0], loaderArgs[0])
-
-    def is_data_valid(self) -> bool:
-        return os.path.isfile(self.path)
-
-    def get_json_config(self) -> str:
-        with open(self.path, 'r') as f:
-            return f.read()
-
-class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
-    """Configuration loader which pulls a config from a URI using an X.509 client certificate"""
-    def __init__(self, loaderArgs: list[str]):
-        """
-        Arguments expected:
-            0: OPNSense base URL
-            1: OPNSense API key
-            2: OPNSense API secret
-            3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
-        """
-        opnsenseURL = loaderArgs[0]
-        logger.debug(f"Argument 0 (OPNSense URL): {opnsenseURL}")
-        apiKey = loaderArgs[1]
-        logger.debug(f"Argument 1 (OPNSense API key): {apiKey}")
-        apiSecret = loaderArgs[2]
-        logger.debug(f"Argument 2 (OPNSense API secret): {apiSecret}")
-        clientCertIdentifier = loaderArgs[3]
-        logger.debug(f"Argument 3 (X.509 Certificate Identifier): {clientCertIdentifier}")
-
-        apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
-        apiCertsRequest = GetRequest(apiCertSession, f"{opnsenseURL}/api/trust/cert/search")
-
-        try:
-            apiCerts = apiCertsRequest.json()['rows']
-        except ValueError:
-            logger.error("Unable to retrieve X.509 certificates (are the API key and secret correct?)")
-            sys.exit(1)
-
-        logger.debug("Successfully retrieved X.509 certificates. Searching for match to identifier...")
-        clientCertIDs = {}
-        for apiCert in apiCerts:
-            if (apiCert['uuid'] == clientCertIdentifier or apiCert['refid'] == clientCertIdentifier or
-                    apiCert['descr'] == clientCertIdentifier or apiCert['commonname'] == clientCertIdentifier):
-                clientCertIDs['uuid'] = apiCert['uuid']
-                clientCertIDs['refid'] = apiCert['refid']
-                clientCertIDs['descr'] = apiCert['descr']
-                logger.debug(f"Successfully matched certificate to identifier \"{clientCertIdentifier}\"")
-                break
-
-        if len(clientCertIDs) == 0:
-            logger.error(f"No match to identifier \"{clientCertIdentifier}\" found in certificates (is the identifier correct?)")
-            sys.exit(1)
-
-        with open("/conf/config.xml", 'r') as f:
-            root = ElementTree.fromstring(f.read())
-            certElements = root.findall("cert")
-
-            for certElement in certElements:
-                if certElement.attrib['uuid'] != clientCertIDs['uuid']:
-                    continue
-
-                refIDElement = certElement.find('refid')
-                if refIDElement is None or refIDElement.text != clientCertIDs['refid']:
-                    continue
-
-                descriptionElement = certElement.find('descr')
-                if descriptionElement is None or descriptionElement.text != clientCertIDs['descr']:
-                    continue
-
-                certTextElement = certElement.find('crt')
-                if certTextElement is not None:
-                    logger.debug("Parsing Base64-encoded X.509 certificate data...")
-                    try:
-                        certificateBytes = base64.b64decode(certTextElement.text)
-
-                    except TypeError:
-                        logger.critical("Invalid Base-64 certificate data. The certificate cannot be parsed. This should not happen!")
-                        sys.exit(1)
-
-                    logger.debug("Successfully parsed X.509 certificate data from Base-64 encoding. Loading certificate...")
-                    self.Certificate = load_pem_x509_certificate(certificateBytes)
-                    logger.debug("Successfully loaded X.509 certificate")
-
-                else:
-                    logger.critical("Could not find X.509 certificate in OPNSense configuration. This should not happen!")
-                    sys.exit(1)
-
-                privateKeyElement = certElement.find('prv')
-                if privateKeyElement is not None:
-                    logger.debug("Parsing Base64-encoded private key data...")
-                    try:
-                        keyBytes = base64.b64decode(privateKeyElement.text)
-
-                    except TypeError:
-                        logger.critical("Invalid Base-64 key data. The key cannot be parsed. This should not happen!")
-                        sys.exit(1)
-
-                    logger.debug("Successfully parsed private key data from Base-64 encoding. Loading key...")
-                    self.Key = load_pem_private_key(keyBytes, password=None)
-                    logger.debug("Successfully loaded private key")
-
-                else:
-                    logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
-                    sys.exit(1)
-
-                break
-
-
-    def is_data_valid(self) -> bool:
-        if self.Certificate is None or self.Key is None:
-            return False
-
-        if OID_CLIENT_AUTH not in self.Certificate.extensions.get_extension_for_class(ExtendedKeyUsage).value:
-            return False
-
-        return self.Certificate.public_key().public_numbers() == self.Key.public_key().public_numbers()
-
-    def get_json_config(self) -> str:
-        return ""
-
-
-# --- more PIAWireguardConfigLoader-derived class types go here ---
-
-def create_loader(path: str) -> PIAWireguardConfigLoader:
-    """Factory method to create a config loader from loader data file"""
-    with open(path, 'r') as f:
-        loaderJSON = json.loads(f.read())
-
-    if "loaderType" not in loaderJSON:
-        raise ValueError("Loader config data missing required key: loaderType")
-
-    try:
-        loaderType = ConfigLoaderType(int(loaderJSON["loaderType"]))
-        logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
-    except ValueError:
-        logger.debug("Unable to parse loader type value as int. Attempting to parse as string...")
-        try:
-            loaderType = ConfigLoaderType[loaderJSON["loaderType"]]
-            logger.debug(f"Successfully parsed loader type: {loaderType._name_}")
-        except KeyError:
-            logger.error(f"Unable to parse required key: loaderType in {path}. The value is either not correctly formatted or has an undefined value.")
-            sys.exit(1)
-
-    if "arguments" not in loaderJSON:
-        raise ValueError("Loader config data missing required key: arguments")
-
-    loaderArgs = loaderJSON['arguments']
-
-    match loaderType:
-        case ConfigLoaderType.LocalFile:
-            return PIAWireguardConfigFileLoader(loaderArgs)
-        case ConfigLoaderType.NetworkURI:
-            return PIAWireguardConfigURILoader(loaderArgs)
-# --- more case matches on other loader enums and class types go here ---
-        case _:
-            raise ValueError(f"No loader class type defined for enum {loaderType}.")
 
 class Instance:
     def __init__(self, data, instanceName):
