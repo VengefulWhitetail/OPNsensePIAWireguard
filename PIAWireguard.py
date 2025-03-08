@@ -275,13 +275,13 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
         """
         opnsenseURL = loaderArgs[0]
-        logging.debug(f"Argument 0 (OPNSense URL): {opnsenseURL}")
+        logger.debug(f"Argument 0 (OPNSense URL): {opnsenseURL}")
         apiKey = loaderArgs[1]
-        logging.debug(f"Argument 1 (OPNSense API key): {apiKey}")
+        logger.debug(f"Argument 1 (OPNSense API key): {apiKey}")
         apiSecret = loaderArgs[2]
-        logging.debug(f"Argument 2 (OPNSense API secret): {apiSecret}")
+        logger.debug(f"Argument 2 (OPNSense API secret): {apiSecret}")
         clientCertIdentifier = loaderArgs[3]
-        logging.debug(f"Argument 3 (X.509 Certificate Identifier): {clientCertIdentifier}")
+        logger.debug(f"Argument 3 (X.509 Certificate Identifier): {clientCertIdentifier}")
 
         apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
         apiCertsRequest = GetRequest(apiCertSession, f"{opnsenseURL}/api/trust/cert/search")
