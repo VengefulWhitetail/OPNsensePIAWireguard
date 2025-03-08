@@ -94,6 +94,7 @@ class PIAWireguardConfigLoader(ABC):
 
 class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
     """Configuration loader which reads from a local file"""
+
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
@@ -113,6 +114,7 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
 
 class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
     """Configuration loader which pulls a config from a URI using an X.509 client certificate"""
+
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
