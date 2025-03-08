@@ -101,6 +101,9 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         """
         self.path = os.path.join(sys.path[0], loaderArgs[0])
 
+    def get_loader_type(self) -> ConfigLoaderType:
+        return ConfigLoaderType.LocalFile
+
     def is_data_valid(self) -> bool:
         return os.path.isfile(self.path)
 
