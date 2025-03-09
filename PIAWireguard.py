@@ -268,14 +268,16 @@ def create_loader(path: str) -> PIAWireguardConfigLoader:
 
     loaderArgs = loaderJSON['arguments']
 
-    match loaderType:
-        case ConfigLoaderType.LocalFile:
-            return PIAWireguardConfigFileLoader(loaderArgs)
-        case ConfigLoaderType.NetworkURI:
-            return PIAWireguardConfigURILoader(loaderArgs)
-# --- more case matches on other loader enums and class types go here ---
-        case _:
-            raise ValueError(f"No loader class type defined for enum {loaderType}.")
+    for subClass in PIAWireguardConfigLoader.__subclasses__():
+        try:
+            instance = subClass(loaderArgs)
+        except TypeError:
+            continue
+
+        if instance.get_loader_type() == loaderType:
+            return instance
+
+    raise ValueError(f"Enum value {loaderType} either has no associated type or its associated type is abstract.")
 
 #
 # Script Start
