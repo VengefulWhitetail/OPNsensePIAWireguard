@@ -208,6 +208,9 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 break
 
+    def get_loader_type(self) -> ConfigLoaderType:
+        return ConfigLoaderType.NetworkURI
+
     def is_data_valid(self) -> bool:
         logger.debug(f"Validating data in {self.__class__.__name__}...")
 
