@@ -231,6 +231,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             logger.error("Currently loaded key does not match currently loaded certificate.")
             return False
 
+        logger.debug("Data successfully validated.")
         return True
 
     def get_json_config(self) -> str:
