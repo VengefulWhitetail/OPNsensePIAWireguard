@@ -228,7 +228,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
         key = load_pem_private_key(self.Key, password=None)
 
         if cert.public_key().public_numbers() != key.public_key().public_numbers():
-            logger.error("Currently loaded key does not match currently loaded certificate.")
+            logger.error("Currently loaded private key does not match currently loaded certificate.")
             return False
 
         logger.debug("Data successfully validated.")
