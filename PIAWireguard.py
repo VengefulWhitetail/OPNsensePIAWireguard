@@ -178,17 +178,14 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 logger.debug("Certificate located.")
                 certTextElement = certElement.find('crt')
                 if certTextElement is not None:
-                    logger.debug("Parsing Base64-encoded X.509 certificate data...")
+                    logger.debug("Parsing certificate data...")
                     try:
-                        certificateBytes = base64.b64decode(certTextElement.text)
+                        self.Certificate = base64.b64decode(certTextElement.text)
+                        logger.debug("Certificate successfully loaded.")
 
                     except TypeError:
-                        logger.critical("Invalid Base-64 certificate data. The certificate cannot be parsed. This should not happen!")
+                        logger.critical("Invalid Base-64 certificate data. The certificate cannot be loaded. This should not happen!")
                         sys.exit(1)
-
-                    logger.debug("Successfully parsed X.509 certificate data from Base-64 encoding. Loading certificate...")
-                    self.Certificate = load_pem_x509_certificate(certificateBytes)
-                    logger.debug("Successfully loaded X.509 certificate")
 
                 else:
                     logger.critical("Could not find certificate in OPNSense configuration. This should not happen!")
@@ -198,15 +195,12 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 if privateKeyElement is not None:
                     logger.debug("Parsing key data...")
                     try:
-                        keyBytes = base64.b64decode(privateKeyElement.text)
+                        self.Key = base64.b64decode(privateKeyElement.text)
+                        logger.debug("Private key successfully loaded.")
 
                     except TypeError:
                         logger.critical("Invalid Base-64 key data. The key cannot be loaded. This should not happen!")
                         sys.exit(1)
-
-                    logger.debug("Successfully parsed private key data from Base-64 encoding. Loading key...")
-                    self.Key = load_pem_private_key(keyBytes, password=None)
-                    logger.debug("Successfully loaded private key")
 
                 else:
                     logger.critical("Could not find certificate private key in OPNSense configuration. This should not happen!")
