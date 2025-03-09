@@ -209,13 +209,29 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 break
 
     def is_data_valid(self) -> bool:
-        if self.Certificate is None or self.Key is None:
+        logger.debug(f"Validating data in {self.__class__.__name__}...")
+
+        if self.Certificate is None:
+            logger.error("No X.509 certificate loaded.")
             return False
 
-        if OID_CLIENT_AUTH not in self.Certificate.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+        if self.Key is None:
+            logger.error("No private key loaded.")
             return False
 
-        return self.Certificate.public_key().public_numbers() == self.Key.public_key().public_numbers()
+        cert = load_pem_x509_certificate(self.Certificate)
+
+        if OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+            logger.error("Currently loaded certificate is not a client certificate.")
+            return False
+
+        key = load_pem_private_key(self.Key, password=None)
+
+        if cert.public_key().public_numbers() != key.public_key().public_numbers():
+            logger.error("Currently loaded key does not match currently loaded certificate.")
+            return False
+
+        return True
 
     def get_json_config(self) -> str:
         return ""
