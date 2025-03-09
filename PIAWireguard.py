@@ -178,10 +178,10 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 logger.debug("Certificate located.")
                 certTextElement = certElement.find('crt')
                 if certTextElement is not None:
-                    logger.debug("Parsing certificate data...")
+                    logger.debug("Decoding Base64 data...")
                     try:
                         self.Certificate = base64.b64decode(certTextElement.text)
-                        logger.debug("Certificate successfully loaded.")
+                        logger.debug("Base64 data decoding successful.")
 
                     except TypeError:
                         logger.critical("Invalid Base-64 certificate data. The certificate cannot be loaded. This should not happen!")
@@ -193,10 +193,10 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
 
                 privateKeyElement = certElement.find('prv')
                 if privateKeyElement is not None:
-                    logger.debug("Parsing key data...")
+                    logger.debug("Decoding Base64 data...")
                     try:
                         self.Key = base64.b64decode(privateKeyElement.text)
-                        logger.debug("Private key successfully loaded.")
+                        logger.debug("Base64 data decoding successful.")
 
                     except TypeError:
                         logger.critical("Invalid Base-64 key data. The key cannot be loaded. This should not happen!")
@@ -222,16 +222,26 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             logger.error("No private key loaded.")
             return False
 
-        cert = load_pem_x509_certificate(self.Certificate)
+        try:
+            cert = load_pem_x509_certificate(self.Certificate)
+
+        except ValueError:
+            logger.critical("Unable to load Base64 data as certificate. This should not happen!")
+            return False
 
         if OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(ExtendedKeyUsage).value:
             logger.error("Currently loaded certificate is not a client certificate.")
             return False
 
-        key = load_pem_private_key(self.Key, password=None)
+        try:
+            key = load_pem_private_key(self.Key, password=None)
+
+        except ValueError:
+            logger.critical("Unable to load Base64 data as private key. This should not happen!")
+            return False
 
         if cert.public_key().public_numbers() != key.public_key().public_numbers():
-            logger.error("Currently loaded private key does not match currently loaded certificate.")
+            logger.critical("Currently loaded private key does not match currently loaded certificate. This should not happen!")
             return False
 
         logger.debug("Data successfully validated.")
