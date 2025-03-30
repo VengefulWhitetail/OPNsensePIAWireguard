@@ -78,6 +78,20 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         with open(self.path, 'r') as f:
             return f.read()
 
+def load_cert_chain_from_bytes(cert_chain: bytes) -> list[x509.Certificate]:
+    cert_delimiter = b"-----END CERTIFICATE-----"
+    cert_list = []
+    split_certs = cert_chain.split(cert_delimiter + b"\n")
+    for cert_bytes in split_certs:
+        if not cert_bytes.endswith(cert_delimiter):
+            cert_bytes += cert_delimiter
+        try:
+            cert = x509.load_pem_x509_certificate(cert_bytes)
+        except ValueError:
+            continue
+        cert_list.append(cert)
+    return cert_list
+
 class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader):
     """Configuration loader which pulls a config from a domain using an X.509 client certificate in OPNSense"""
 
