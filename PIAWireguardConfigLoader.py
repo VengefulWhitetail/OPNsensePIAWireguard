@@ -182,39 +182,37 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                 if description_element is None or description_element.text != client_cert_ids['descr']:
                     continue
 
-                self.logger.debug("Certificate located.")
+                self.logger.debug("Certificate identifier match found.")
                 cert_text_element = cert_element.find('crt')
-                if cert_text_element is not None:
-                    self.logger.debug("Decoding Base64 data...")
-                    try:
-                        self.certificate = base64.b64decode(cert_text_element.text)
-                        self.logger.debug("Base64 data decoding successful.")
-
-                    except TypeError:
-                        self.logger.critical(
-                            "Invalid Base-64 certificate data. The certificate cannot be loaded. This should not happen!")
-                        sys.exit(1)
-
-                else:
+                if cert_text_element is None:
                     self.logger.critical(
                         "Could not find certificate in OPNSense configuration. This should not happen!")
                     sys.exit(1)
 
+                self.logger.debug("Decoding Base64 certificate data...")
+                try:
+                    self.certificate = base64.b64decode(cert_text_element.text)
+                    self.logger.debug("Base64 certificate decoding successful.")
+
+                except TypeError:
+                    self.logger.critical(
+                        "Invalid Base-64 certificate data. The certificate cannot be loaded. This should not happen!")
+                    sys.exit(1)
+
                 key_element = cert_element.find('prv')
-                if key_element is not None:
-                    self.logger.debug("Decoding Base64 data...")
-                    try:
-                        self.key = base64.b64decode(key_element.text)
-                        self.logger.debug("Base64 data decoding successful.")
-
-                    except TypeError:
-                        self.logger.critical(
-                            "Invalid Base-64 key data. The key cannot be loaded. This should not happen!")
-                        sys.exit(1)
-
-                else:
+                if key_element is None:
                     self.logger.critical(
                         "Could not find certificate private key in OPNSense configuration. This should not happen!")
+                    sys.exit(1)
+
+                self.logger.debug("Decoding Base64 key data...")
+                try:
+                    self.key = base64.b64decode(key_element.text)
+                    self.logger.debug("Base64 key decoding successful.")
+
+                except TypeError:
+                    self.logger.critical(
+                        "Invalid Base-64 key data. The key cannot be loaded. This should not happen!")
                     sys.exit(1)
 
                 break
