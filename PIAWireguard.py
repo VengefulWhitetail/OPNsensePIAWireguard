@@ -545,10 +545,14 @@ try:
     loader = create_loader(loaderPath)
     logger.debug(f"Config loader of type {loader.__class__.__name__} successfully created from {loaderPath}")
 
+    # Validate our loader data
     if loader.is_data_valid():
+        logger.debug(f"Config loader data validated.")
+
         # Import our config file
         try:
             config = json.loads(loader.get_json_config(), object_pairs_hook=CheckForDupKey)
+            logger.debug("JSON config successfully loaded.")
         except ValueError as e:
             logger.error(f"Failed to load JSON config file from {loader}")
             sys.exit(1)
