@@ -122,19 +122,19 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
     def __init__(self, loaderArgs: list[str]):
         """
         Arguments expected:
-            0: OPNSense API base URL
+            0: OPNSense firewall URI
             1: OPNSense API key
             2: OPNSense API secret
-            3: Identifier of certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
+            3: Identifier of client certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
         """
         opnsenseURL = loaderArgs[0]
-        logger.debug(f"{self.__class__.__name__} Argument 0 (OPNSense URL): {opnsenseURL}")
+        logger.debug(f"{self.__class__.__name__} Argument 0 (OPNSense Firewall URI): {opnsenseURL}")
         apiKey = loaderArgs[1]
         logger.debug(f"{self.__class__.__name__} Argument 1 (OPNSense API key): {apiKey}")
         apiSecret = loaderArgs[2]
         logger.debug(f"{self.__class__.__name__} Argument 2 (OPNSense API secret): [Not logging value for security purposes].")
         clientCertIdentifier = loaderArgs[3]
-        logger.debug(f"{self.__class__.__name__} Argument 3 (X.509 Certificate Identifier): {clientCertIdentifier}")
+        logger.debug(f"{self.__class__.__name__} Argument 3 (X.509 Client Certificate Identifier): {clientCertIdentifier}")
 
         apiCertSession = CreateRequestsSession((apiKey, apiSecret), None, False)
         apiCertsRequest = GetRequest(apiCertSession, f"{opnsenseURL}/api/trust/cert/search")
