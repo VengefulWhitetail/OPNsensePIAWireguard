@@ -5,8 +5,8 @@ import requests
 import urllib3
 
 from abc import ABC, abstractmethod
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509 import load_pem_x509_certificate, ExtendedKeyUsage, OID_CLIENT_AUTH, ExtensionNotFound
 from enum import Enum
 from logging import Logger
 from xml.etree import ElementTree as ElementTree
@@ -203,17 +203,17 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             return False
 
         try:
-            cert = load_pem_x509_certificate(self.certificate)
+            cert = x509.load_pem_x509_certificate(self.certificate)
 
         except ValueError:
             self.logger.critical("Unable to load Base64 data as certificate. This should not happen!")
             return False
 
         try:
-            if OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+            if x509.OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value:
                 self.logger.error("Currently loaded certificate is not a client certificate.")
                 return False
-        except ExtensionNotFound:
+        except x509.ExtensionNotFound:
             self.logger.error("Currently loaded certificate has no EKU extension.")
             return False
 
