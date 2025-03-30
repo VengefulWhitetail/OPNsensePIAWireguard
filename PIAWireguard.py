@@ -55,7 +55,7 @@ class ConfigLoaderType(Enum):
     LocalFile = 0
     """Reads configuration from a locally stored file."""
 
-    NetworkURI = 1
+    ClientAuthenticatedNetworkDomain = 1
     """Reads configuration from a network URI"""
 
     # --- more type enum entries go here ---
@@ -116,8 +116,8 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
         with open(self.path, 'r') as f:
             return f.read()
 
-class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
-    """Configuration loader which pulls a config from a URI using an X.509 client certificate"""
+class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader):
+    """Configuration loader which pulls a config from a domain using an X.509 client certificate in OPNSense"""
 
     def __init__(self, loaderArgs: list[str]):
         """
@@ -213,7 +213,7 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
                 break
 
     def get_loader_type(self) -> ConfigLoaderType:
-        return ConfigLoaderType.NetworkURI
+        return ConfigLoaderType.ClientAuthenticatedNetworkDomain
 
     def is_data_valid(self) -> bool:
         logger.debug(f"Validating data in {self.__class__.__name__}...")
