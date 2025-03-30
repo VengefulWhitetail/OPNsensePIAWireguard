@@ -44,6 +44,10 @@ from xml.etree import ElementTree as ElementTree
 # Please see PIAWireguard.json and PIAWireguardLoader.json for configuration settings
 #
 
+#
+# Config Loader classes start
+#
+
 class ConfigLoaderType(Enum):
     """Enum class defining types of configuration loaders.
 
