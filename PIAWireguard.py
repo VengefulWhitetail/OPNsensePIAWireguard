@@ -229,8 +229,12 @@ class PIAWireguardConfigURILoader(PIAWireguardConfigLoader):
             logger.critical("Unable to load Base64 data as certificate. This should not happen!")
             return False
 
-        if OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(ExtendedKeyUsage).value:
-            logger.error("Currently loaded certificate is not a client certificate.")
+        try:
+            if OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(ExtendedKeyUsage).value:
+                logger.error("Currently loaded certificate is not a client certificate.")
+                return False
+        except Exception:
+            logger.error("Currently loaded certificate has no EKU extension.")
             return False
 
         try:
