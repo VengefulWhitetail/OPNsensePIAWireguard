@@ -530,10 +530,14 @@ args = parser.parse_args()
 if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
 
-# Create our loader from loader data file
-loaderPath = os.path.join(sys.path[0], "PIAWireguardLoader.json")
-if not os.path.isfile(loaderPath):
-    logger.error(f"Failed to find loader config file {loaderPath}")
+# Import our loader data file
+try:
+    loaderPath = os.path.join(sys.path[0], "PIAWireguardLoader.json")
+    if not os.path.isfile(loaderPath):
+        logger.error(f"Failed to find loader data file {loaderPath}")
+        sys.exit(1)
+except ValueError as e:
+    logger.error(f"Failed to import loader data file {loaderPath} error: {str(e)}")
     sys.exit(1)
 
 # Create loader from loader data file
