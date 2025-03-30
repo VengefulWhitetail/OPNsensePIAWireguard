@@ -107,6 +107,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             1: OPNSense API key
             2: OPNSense API secret
             3: Identifier of client certificate to use. You may use the certificate's common name, description, OPNSense UUID, or OPNSense Ref ID
+            4: URL of destination
         """
         self.logger = logger
         opnsense_uri = loader_args[0]
@@ -119,6 +120,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         client_cert_identifier = loader_args[3]
         self.logger.debug(
             f"{self.__class__.__name__} Argument 3 (X.509 Client Certificate Identifier): {client_cert_identifier}")
+        self.destination = loader_args[4]
+        self.logger.debug(f"{self.__class__.__name__} Argument 4 (Destination): {self.destination}")
 
         session = requests.Session()
         session.auth = (api_key, api_secret)
