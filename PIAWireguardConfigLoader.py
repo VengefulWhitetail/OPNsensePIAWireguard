@@ -218,39 +218,46 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         self.logger.debug(f"Validating data in {self.__class__.__name__}...")
 
         if len(self.certificates) == 0:
-            self.logger.error("No X.509 certificate data loaded.")
+            self.logger.error("No X.509 certificate data loaded. The loader data is not valid.")
             return False
 
         if self.key is None:
-            self.logger.error("No private key data loaded.")
+            self.logger.error("No private key data loaded. The loader data is not valid.")
             return False
 
         try:
             cert_bytes = self.certificates[0]
+            self.logger.debug("Loading certificate...")
             cert = x509.load_pem_x509_certificate(cert_bytes)
 
         except ValueError:
-            self.logger.critical("Unable to load Base64 data as certificate. This should not happen!")
+            self.logger.critical(
+                "Unable to load Base64 data as certificate. The loader data is not valid. This should not happen!")
             return False
 
+        self.logger.debug("Certificate loaded successfully. Checking for client authentication extension...")
         try:
             if x509.OID_CLIENT_AUTH not in cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value:
-                self.logger.error("Currently loaded certificate is not a client certificate.")
+                self.logger.error(
+                    "Currently loaded certificate is not a client certificate. The loader data is not valid.")
                 return False
         except x509.ExtensionNotFound:
-            self.logger.error("Currently loaded certificate has no EKU extension.")
+            self.logger.error("Currently loaded certificate is not a client certificate. The loader data is not valid.")
             return False
 
         try:
+            self.logger.debug("Loading key...")
             key = load_pem_private_key(self.key, password=None)
 
         except ValueError:
-            self.logger.critical("Unable to load Base64 data as private key. This should not happen!")
+            self.logger.critical(
+                "Unable to load Base64 data as private key. The loader data is not valid. This should not happen!")
             return False
 
+        self.logger.debug("Private key loaded successfully. Comparing to certificate...")
         if cert.public_key().public_numbers() != key.public_key().public_numbers():
             self.logger.critical(
-                "Currently loaded private key does not match currently loaded certificate. This should not happen!")
+                "Currently loaded private key is not the signer of currently loaded certificate. The loader data is not valid. This should not happen!")
             return False
 
         self.logger.debug("Data successfully validated.")
