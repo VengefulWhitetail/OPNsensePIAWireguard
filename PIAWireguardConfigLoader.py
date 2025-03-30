@@ -217,12 +217,13 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
     def is_data_valid(self) -> bool:
         self.logger.debug(f"Validating data in {self.__class__.__name__}...")
 
-        if len(self.certificates) == 0:
-            self.logger.error("No X.509 certificate data loaded. The loader data is not valid.")
+        if len(self.certificates) == 0 and self.key is None:
+            self.logger.error("No X.509 certificate or private key data loaded. The loader data is not valid.")
             return False
 
-        if self.key is None:
-            self.logger.error("No private key data loaded. The loader data is not valid.")
+        if len(self.certificates) == 0 or self.key is None:
+            self.logger.critical(
+                "Only one of X.509 certificate or private key data is loaded. The loader data is not valid. This should not happen!")
             return False
 
         try:
@@ -259,6 +260,10 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             self.logger.critical(
                 "Currently loaded private key is not the signer of currently loaded certificate. The loader data is not valid. This should not happen!")
             return False
+
+        self.logger.debug("Private key matches certificate.")
+
+
 
         self.logger.debug("Data successfully validated.")
         return True
