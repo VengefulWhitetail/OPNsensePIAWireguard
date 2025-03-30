@@ -218,11 +218,11 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         self.logger.debug(f"Validating data in {self.__class__.__name__}...")
 
         if len(self.certificates) == 0:
-            self.logger.error("No X.509 certificate loaded.")
+            self.logger.error("No X.509 certificate data loaded.")
             return False
 
         if self.key is None:
-            self.logger.error("No private key loaded.")
+            self.logger.error("No private key data loaded.")
             return False
 
         try:
