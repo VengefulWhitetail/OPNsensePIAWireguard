@@ -82,21 +82,6 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
             return f.read()
 
 
-def load_cert_chain_from_bytes(cert_chain: bytes) -> list[x509.Certificate]:
-    cert_delimiter = b"-----END CERTIFICATE-----"
-    cert_list = []
-    split_certs = cert_chain.split(cert_delimiter + b"\n")
-    for cert_bytes in split_certs:
-        if not cert_bytes.endswith(cert_delimiter):
-            cert_bytes += cert_delimiter
-        try:
-            cert = x509.load_pem_x509_certificate(cert_bytes)
-        except ValueError:
-            continue
-        cert_list.append(cert)
-    return cert_list
-
-
 class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader):
     """Configuration loader which pulls a config from a domain using an X.509 client certificate in OPNSense"""
 
@@ -191,7 +176,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
 
                 self.logger.debug("Decoding Base64 certificate data...")
                 try:
-                    self.certificate = base64.b64decode(cert_text_element.text)
+                    cert_chain = base64.b64decode(cert_text_element.text)
                     self.logger.debug("Base64 certificate decoding successful.")
 
                 except TypeError:
@@ -215,6 +200,15 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                         "Invalid Base-64 key data. The key cannot be loaded. This should not happen!")
                     sys.exit(1)
 
+                cert_footer = b"-----END CERTIFICATE-----"
+                certificates = cert_chain.split(cert_footer + b"\n")
+
+                for i in range(len(certificates)):
+                    cert = certificates[i]
+                    if not cert.endswith(cert_footer):
+                        certificates[i] = cert + cert_footer
+
+                self.certificates = certificates
                 break
 
     def get_loader_type(self) -> ConfigLoaderType:
@@ -223,7 +217,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
     def is_data_valid(self) -> bool:
         self.logger.debug(f"Validating data in {self.__class__.__name__}...")
 
-        if self.certificate is None:
+        if len(self.certificates) == 0:
             self.logger.error("No X.509 certificate loaded.")
             return False
 
@@ -232,7 +226,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             return False
 
         try:
-            cert = x509.load_pem_x509_certificate(self.certificate)
+            cert_bytes = self.certificates[0]
+            cert = x509.load_pem_x509_certificate(cert_bytes)
 
         except ValueError:
             self.logger.critical("Unable to load Base64 data as certificate. This should not happen!")
