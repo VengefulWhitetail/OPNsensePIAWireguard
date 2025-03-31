@@ -226,6 +226,21 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             except SSL.SysCallError as e:
                 pass
 
+        highest_common_ca_index = 0
+        for i in range(len(self.certificates)):
+            my_cert = x509.load_pem_x509_certificate(self.certificates[~i])
+            server_cert = server_certs[~i].to_cryptography()
+
+            # TODO: check if both are CAs
+
+            my_cert_issuer = my_cert.issuer.rfc4514_string()
+            server_cert_issuer = server_cert.issuer.rfc4514_string()
+            if my_cert_issuer != server_cert_issuer:
+                highest_common_ca_index = max(0, i - 1)
+                break
+
+        self.ca_index = highest_common_ca_index
+
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
 
