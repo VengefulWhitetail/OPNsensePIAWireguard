@@ -223,7 +223,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             server_certs = connection.get_peer_cert_chain()
             try:
                 connection.shutdown()
-            except SSL.SysCallError as e:
+            except SSL.SysCallError:
                 pass
 
         highest_common_ca_index = 0
@@ -292,9 +292,6 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             return False
 
         self.logger.debug("Private key matches certificate.")
-
-
-
         self.logger.debug("Data successfully validated.")
         return True
 
