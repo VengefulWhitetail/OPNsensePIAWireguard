@@ -221,7 +221,10 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             connection.set_connect_state()
             connection.do_handshake()
             server_certs = connection.get_peer_cert_chain()
-            connection.shutdown()
+            try:
+                connection.shutdown()
+            except SSL.SysCallError as e:
+                pass
 
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
