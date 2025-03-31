@@ -85,6 +85,13 @@ class PIAWireguardConfigFileLoader(PIAWireguardConfigLoader):
             return f.read()
 
 
+def is_ca(cert: x509.Certificate) -> bool:
+    try:
+        return cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS).value.ca
+    except x509.ExtensionNotFound:
+        return False
+
+
 class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader):
     """Configuration loader which pulls a config from a domain using an X.509 client certificate in OPNSense"""
 
@@ -231,7 +238,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             my_cert = x509.load_pem_x509_certificate(self.certificates[~i])
             server_cert = server_certs[~i].to_cryptography()
 
-            # TODO: check if both are CAs
+            if not is_ca(my_cert) or not is_ca(server_cert):
+                continue
 
             my_cert_issuer = my_cert.issuer.rfc4514_string()
             server_cert_issuer = server_cert.issuer.rfc4514_string()
