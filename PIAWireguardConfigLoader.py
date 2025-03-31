@@ -1,7 +1,7 @@
 import base64
 import os
-import sys
 import requests
+import sys
 import urllib3
 
 from abc import ABC, abstractmethod
