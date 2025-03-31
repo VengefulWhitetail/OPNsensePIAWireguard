@@ -3,7 +3,6 @@ import os
 import requests
 import socket
 import sys
-import urllib.parse
 import urllib3
 
 from abc import ABC, abstractmethod
@@ -11,6 +10,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from enum import Enum
 from logging import Logger
+from urllib.parse import urlparse
 from xml.etree import ElementTree as ElementTree
 
 
@@ -213,7 +213,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                 self.certificates = certificates
                 break
 
-        result = urllib.parse.urlparse(self.destination)
+        result = urlparse(self.destination)
         with socket.create_connection((result.hostname, result.port)) as s:
             pass
 
