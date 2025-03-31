@@ -12,6 +12,7 @@ from logging import Logger
 from socket import create_connection
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ElementTree
+from OpenSSL import SSL
 
 
 class ConfigLoaderType(Enum):
@@ -215,7 +216,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
 
         result = urlparse(self.destination)
         with create_connection((result.hostname, result.port)) as s:
-            pass
+            context = SSL.Context(SSL.TLS_CLIENT_METHOD)
+            ssls = SSL.Connection(context, s)
 
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
