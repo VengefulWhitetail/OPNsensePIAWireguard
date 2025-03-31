@@ -218,6 +218,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         with create_connection((result.hostname, result.port)) as s:
             context = SSL.Context(SSL.TLS_CLIENT_METHOD)
             ssls = SSL.Connection(context, s)
+            ssls.set_connect_state()
+            ssls.do_handshake()
 
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
