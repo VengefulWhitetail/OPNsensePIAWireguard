@@ -1,7 +1,9 @@
 import base64
 import os
 import requests
+import socket
 import sys
+import urllib.parse
 import urllib3
 
 from abc import ABC, abstractmethod
@@ -210,6 +212,10 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
 
                 self.certificates = certificates
                 break
+
+        result = urllib.parse.urlparse(self.destination)
+        with socket.create_connection((result.hostname, result.port)) as s:
+            pass
 
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
