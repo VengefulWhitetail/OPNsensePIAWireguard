@@ -1,7 +1,9 @@
 import base64
 import os
 import requests
+import ssl
 import sys
+import tempfile
 import urllib3
 
 from abc import ABC, abstractmethod
@@ -309,4 +311,24 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         return True
 
     def get_json_config(self) -> str:
-        return ""
+        certs = bytes()
+        for i in reversed(range(self.ca_index, len(self.certificates))):
+            cert = self.certificates[i]
+            certs += cert
+            certs += b'\n'
+
+        context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cadata=certs.decode())
+        with tempfile.NamedTemporaryFile(delete=True) as cert_file, \
+                tempfile.NamedTemporaryFile(delete=True) as key_file:
+            cert_file.write(self.certificates[0])
+            cert_file.flush()
+            key_file.write(self.key)
+            key_file.flush()
+            context.load_cert_chain(certfile=cert_file.name, keyfile=key_file.name)
+            http = urllib3.PoolManager(ssl_context=context)
+            response = http.request("GET", self.destination)
+
+            if response.status == 200:
+                return response.data.decode()
+
+            return ""
