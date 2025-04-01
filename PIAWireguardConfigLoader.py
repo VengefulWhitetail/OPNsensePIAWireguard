@@ -238,7 +238,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             except SSL.SysCallError:
                 pass
 
-        highest_common_ca_index = 0
+        highest_common_ca_rindex = 0  # As root certs are at the end of lists, we must go by a rear index
         for i in range(len(self.certificates)):
             my_cert = x509.load_pem_x509_certificate(self.certificates[~i])
             server_cert = server_certs[~i]
@@ -249,10 +249,10 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             my_cert_subject = rfc4514_to_dict(my_cert.subject.rfc4514_string())
             server_cert_subject = rfc4514_to_dict(server_cert.subject.rfc4514_string())
             if my_cert_subject != server_cert_subject:
-                highest_common_ca_index = max(0, i - 1)
+                highest_common_ca_rindex = max(0, i - 1)
                 break
 
-        self.ca_index = highest_common_ca_index
+        self.ca_index = len(self.certificates) - highest_common_ca_rindex - 1
 
     def get_loader_type(self) -> ConfigLoaderType:
         return ConfigLoaderType.ClientAuthenticatedNetworkDomain
