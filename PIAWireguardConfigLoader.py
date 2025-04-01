@@ -232,7 +232,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             connection = SSL.Connection(context, s)
             connection.set_connect_state()
             connection.do_handshake()
-            server_certs = connection.get_peer_cert_chain()
+            server_certs = connection.get_peer_cert_chain(as_cryptography=True)
             try:
                 connection.shutdown()
             except SSL.SysCallError:
@@ -241,7 +241,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         highest_common_ca_index = 0
         for i in range(len(self.certificates)):
             my_cert = x509.load_pem_x509_certificate(self.certificates[~i])
-            server_cert = server_certs[~i].to_cryptography()
+            server_cert = server_certs[~i]
 
             if not is_ca(my_cert) or not is_ca(server_cert):
                 continue
