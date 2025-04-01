@@ -305,7 +305,6 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             return False
 
         self.logger.debug("Private key matches certificate.")
-        self.logger.debug("Data successfully validated.")
         return True
 
     def get_json_config(self) -> str:
