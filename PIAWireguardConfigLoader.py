@@ -289,8 +289,9 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             self.logger.error("Currently loaded certificate is not a client certificate. The loader data is not valid.")
             return False
 
+        self.logger.debug("Client authentication found in certificate extensions.")
         try:
-            self.logger.debug("Loading key...")
+            self.logger.debug("Loading private key, this may take a few seconds...")
             key = load_pem_private_key(self.key, password=None)
 
         except ValueError:
