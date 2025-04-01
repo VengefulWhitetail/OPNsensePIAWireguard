@@ -12,7 +12,7 @@ from logging import Logger
 from socket import create_connection
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ElementTree
-from OpenSSL import SSL
+from OpenSSL.SSL import Context, Connection, SysCallError, TLS_CLIENT_METHOD
 
 
 class ConfigLoaderType(Enum):
@@ -228,14 +228,14 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
 
         result = urlparse(self.destination)
         with create_connection((result.hostname, result.port)) as s:
-            context = SSL.Context(SSL.TLS_CLIENT_METHOD)
-            connection = SSL.Connection(context, s)
+            context = Context(TLS_CLIENT_METHOD)
+            connection = Connection(context, s)
             connection.set_connect_state()
             connection.do_handshake()
             server_certs = connection.get_peer_cert_chain(as_cryptography=True)
             try:
                 connection.shutdown()
-            except SSL.SysCallError:
+            except SysCallError:
                 pass
 
         highest_common_ca_rindex = 0  # As root certs are at the end of lists, we must go by a rear index
