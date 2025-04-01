@@ -246,8 +246,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             if not is_ca(my_cert) or not is_ca(server_cert):
                 continue
 
-            my_cert_issuer = rfc4514_to_dict(my_cert.issuer.rfc4514_string())
-            server_cert_issuer = rfc4514_to_dict(server_cert.issuer.rfc4514_string())
+            my_cert_issuer = rfc4514_to_dict(my_cert.subject.rfc4514_string())
+            server_cert_issuer = rfc4514_to_dict(server_cert.subject.rfc4514_string())
             if my_cert_issuer != server_cert_issuer:
                 highest_common_ca_index = max(0, i - 1)
                 break
