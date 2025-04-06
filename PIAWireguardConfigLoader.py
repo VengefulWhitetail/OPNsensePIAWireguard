@@ -133,6 +133,9 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
 
         try:
             r = session.get(f"{opnsense_uri}/api/trust/cert/search", params=None, timeout=10)
+            if r.status_code == 403:
+                self.logger.critical("Access to certificates denied by OPNSense API (does your user not have System: Certificate Manager privileges?)")
+                sys.exit(1)
             if r.status_code == 401:
                 raise ValueError("unauthorized")
             if r.status_code != 200:
