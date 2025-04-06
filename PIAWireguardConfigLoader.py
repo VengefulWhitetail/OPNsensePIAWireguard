@@ -134,7 +134,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         try:
             r = session.get(f"{opnsense_uri}/api/trust/cert/search", params=None, timeout=10)
             if r.status_code == 403:
-                self.logger.critical("Access to certificates denied by OPNSense API (does your user not have System: Certificate Manager privileges?)")
+                self.logger.critical(
+                    "Access to certificates denied by OPNSense API (does your user not have System: Certificate Manager privileges?)")
                 sys.exit(1)
             if r.status_code == 401:
                 raise ValueError("unauthorized")
@@ -147,7 +148,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
         try:
             api_certs = api_certs_request.json()['rows']
         except ValueError:
-            self.logger.error(
+            self.logger.critical(
                 "Unable to retrieve certificate records from OPNSense API (are the URL, API key, and API secret correct?)")
             sys.exit(1)
 
@@ -164,7 +165,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                 break
 
         if len(client_cert_ids) == 0:
-            self.logger.error(
+            self.logger.critical(
                 f"No match to identifier \"{client_cert_identifier}\" found in certificate records (is the identifier correct?)")
             sys.exit(1)
 
@@ -245,7 +246,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                     self.logger.warning("Unable to close SSL connection: Connection was already closed.")
         except PermissionError:
             self.logger.critical(
-                f"Permission denied to destination {self.destination} (is your firewall blocking the connection?)")
+                f"Permission denied to access destination {self.destination} (is your firewall blocking the connection?)")
             sys.exit(1)
 
         highest_common_ca_rindex = 0  # As root certs are at the end of lists, we must go by a rear index
