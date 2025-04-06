@@ -244,6 +244,10 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                     connection.shutdown()
                 except SysCallError:
                     self.logger.warning("Unable to close SSL connection: Connection was already closed.")
+        except ConnectionRefusedError:
+            self.logger.critical(
+                f"Connection to destination {self.destination} was refused (is your firewall rejecting the connection?)")
+            sys.exit(1)
         except PermissionError:
             self.logger.critical(
                 f"Permission denied to access destination {self.destination} (is your firewall blocking the connection?)")
