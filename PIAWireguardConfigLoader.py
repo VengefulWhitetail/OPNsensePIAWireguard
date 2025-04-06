@@ -318,8 +318,8 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             certs += b'\n'
 
         context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cadata=certs.decode())
-        with tempfile.NamedTemporaryFile(delete=True) as cert_file, \
-                tempfile.NamedTemporaryFile(delete=True) as key_file:
+        with tempfile.NamedTemporaryFile(mode="wb", delete=True) as cert_file, \
+                tempfile.NamedTemporaryFile(mode="wb", delete=True) as key_file:
             cert_file.write(self.certificates[0])
             cert_file.flush()
             key_file.write(self.key)
