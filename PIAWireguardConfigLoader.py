@@ -229,16 +229,21 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
                 break
 
         result = urlparse(self.destination)
-        with create_connection((result.hostname, result.port)) as s:
-            context = Context(TLS_CLIENT_METHOD)
-            connection = Connection(context, s)
-            connection.set_connect_state()
-            connection.do_handshake()
-            server_certs = connection.get_peer_cert_chain()
-            try:
-                connection.shutdown()
-            except SysCallError:
-                pass
+        try:
+            with create_connection((result.hostname, result.port)) as s:
+                context = Context(TLS_CLIENT_METHOD)
+                connection = Connection(context, s)
+                connection.set_connect_state()
+                connection.do_handshake()
+                server_certs = connection.get_peer_cert_chain()
+                try:
+                    connection.shutdown()
+                except SysCallError:
+                    pass
+        except PermissionError:
+            self.logger.critical(
+                f"Permission denied to destination {self.destination} (is your firewall blocking the connection?)")
+            sys.exit(1)
 
         highest_common_ca_rindex = 0  # As root certs are at the end of lists, we must go by a rear index
         for i in range(len(self.certificates)):
