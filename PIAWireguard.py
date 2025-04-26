@@ -102,7 +102,7 @@ def validate_json(data):
     for instance_name, instance_data in instances.items():
         if not instance_name.isalnum or not isinstance(instance_data, dict):
             raise ValueError(f"Invalid instance name or structure for '{instance_name}'")
-        
+
         # Additional checks for instance properties
         required_instance_properties = ["regionId", "dipToken", "dip", "portForward", "opnsenseWGPort"]
         for prop in required_instance_properties:
@@ -112,12 +112,15 @@ def validate_json(data):
         # Additional checks for property types and values
         if not isinstance(instance_data["regionId"], str) or not instance_data["regionId"].strip():
             raise ValueError(f"'regionId' in instance '{instance_name}' must be a non-blank string")
-        
+
         if not isinstance(instance_data["dip"], bool):
             raise ValueError(f"'dip' in instance '{instance_name}' must be a boolean (true or false)")
 
         if not isinstance(instance_data["portForward"], bool):
             raise ValueError(f"'portForward' in instance '{instance_name}' must be a boolean (true or false)")
+
+        if (post_script := instance_data.get("postConfigScript")) and (not isinstance(post_script, str) or not post_script.strip()):
+            raise ValueError(f"'postConfigScript' in instance '{instance_name}' must be a non-blank string to an executable file")
 
         opnsenseWGPort = instance_data.get("opnsenseWGPort", "")
         if not (opnsenseWGPort.isdigit() and 1 <= int(opnsenseWGPort) <= 65535):
@@ -250,6 +253,7 @@ class Instance:
        self.Region = data['instances'][instanceName]["regionId"]
        self.DipToken = data['instances'][instanceName]["dipToken"]
        self.Dip = data['instances'][instanceName]["dip"]
+       self.Port = 0
        self.PortForward = data['instances'][instanceName]["portForward"]
        self.WGPort = data['instances'][instanceName]["opnsenseWGPort"]
        self.WGUUID = ""
@@ -267,6 +271,7 @@ class Instance:
        self.PiaPortUUID = ""
        self.RouteUUID = ""
        self.ServerChange = True
+       self.PostConfigScript = data['instances'][instanceName].get("postConfigScript", False)
     def __str__(self):
         instance_dict = {"Instance": self.WGInstanceName}
         instance_dict.update(vars(self))
@@ -299,7 +304,7 @@ if 'REQUESTS_CA_BUNDLE' in os.environ:
     del os.environ['REQUESTS_CA_BUNDLE']
 
 # Configure the logging module
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO, stream=sys.stdout)
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger("PIAWireGuard")
 
 # Create an argument parser
@@ -1013,6 +1018,7 @@ for instance_obj in instances_array:
                 logger.error(f"addItem alias - Error message: {str(e)}")
                 sys.exit(1)
             opnsensePiaPortUpdated = True
+            instance_obj.Port = wireguardSignature['port']
         else:
             # get current port alias information, so we can check its the right port
             try:
@@ -1048,6 +1054,7 @@ for instance_obj in instances_array:
                     logger.error(f"setItem alias - Response error message: {str(request.text)}")
                     sys.exit(1)
                 opnsensePiaPortUpdated = True
+                instance_obj.Port = wireguardSignature['port']
             else:
                 logger.debug("No port update required in OPNsense")
 
@@ -1066,6 +1073,25 @@ for instance_obj in instances_array:
                 sys.exit(1)
             
     logger.debug(f"Finished processing port forward for tunnel instance {instance_obj.Name}")
+
+for instance_obj in instances_array:
+    if instance_obj.PostConfigScript:
+        if instance_obj.ServerChange or instance_obj.Port != 0:
+            logger.debug(f"Running post configuration script for {instance_obj.Name}")
+
+            args = [instance_obj.Name]
+            if instance_obj.Port != 0:
+                logger.debug(f"Adding forwarded port {instance_obj.Port} to second argument for {instance_obj.PostConfigScript}")
+                args.append(str(instance_obj.Port))  # Ensure it's a string for subprocess
+
+            result = subprocess.run([instance_obj.PostConfigScript] + args, capture_output=True, text=True)
+
+            log_level = logging.WARNING if result.returncode != 0 else logging.DEBUG
+            logger.log(log_level, "Return code: %d", result.returncode)
+            logger.log(log_level, "stdout: %s", result.stdout.strip())
+            logger.log(log_level, "stderr: %s", result.stderr.strip())
+
+            logger.log(log_level, "Finished running post configuration script")
 
 logger.debug("Finished")
 sys.exit(0)
