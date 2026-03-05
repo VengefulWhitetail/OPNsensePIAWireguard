@@ -331,6 +331,7 @@ class PIAWireguardConfigClientAuthenticatedDomainLoader(PIAWireguardConfigLoader
             certs += b'\n'
 
         context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cadata=certs.decode())
+        context.verify_flags &= ~ssl.VERIFY_X509_STRICT
         with tempfile.NamedTemporaryFile(mode="wb", delete=True) as cert_file, \
                 tempfile.NamedTemporaryFile(mode="wb", delete=True) as key_file:
             cert_file.write(self.certificates[0])
