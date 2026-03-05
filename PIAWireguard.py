@@ -81,6 +81,7 @@ def create_loader(path: str) -> PIAWireguardConfigLoader:
 #
 
 def validate_json(data):
+    name_pattern = re.compile(r'^[a-zA-Z0-9_]+$')
     required_keys = ["opnsenseURL", "opnsenseKey", "opnsenseSecret", "piaUsername", "piaPassword", "opnsenseWGPrefixName", "instances"]
     for key in required_keys:
         if key not in data:
@@ -93,6 +94,9 @@ def validate_json(data):
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"Property '{prop}' must be a non-blank string")
 
+    if not name_pattern.match(data['opnsenseWGPrefixName']):
+        raise ValueError(f"Invalid opnsenseWGPrefixName value '{data['opnsenseWGPrefixName']}'")
+
     # Validate 'instances'
     instances = data.get("instances", {})
     if not isinstance(instances, dict) or not 1 <= len(instances) <= 10:
@@ -100,8 +104,11 @@ def validate_json(data):
 
     opnsenseWGPorts = set()
     for instance_name, instance_data in instances.items():
-        if not instance_name.isalnum or not isinstance(instance_data, dict):
-            raise ValueError(f"Invalid instance name or structure for '{instance_name}'")
+        if not name_pattern.match(instance_name):
+            raise ValueError(f"Invalid instance name '{instance_name}'")
+
+        if not isinstance(instance_data, dict):
+            raise ValueError(f"Invalid instance structure for '{instance_name}'")
 
         # Additional checks for instance properties
         required_instance_properties = ["regionId", "dipToken", "dip", "portForward", "opnsenseWGPort"]
@@ -233,6 +240,7 @@ def override_dns(domain, ip):
     """
     Adds dns entry in to dns cache dictionary, which is checked before dns lookup to allow us to override dns
     """
+    domain = domain.lower()
     dns_cache[domain] = ip
 prv_getaddrinfo = socket.getaddrinfo
 # Override default socket.getaddrinfo() and pass ip instead of host
@@ -689,21 +697,21 @@ for instance_obj in instances_array:
                 logger.error(f"route reconfigure - Error message: {str(reconfigure)}")
                 sys.exit(1)
             logger.debug(f"PIA tunnel ip {state.wgIp} now set to route over WAN gateway {config['tunnelGateway']} via static route")
-    # If non DIP get meta auth token
+    # If non DIP get auth token from global API
     if instance_obj.Dip == False:
-        # Get PIA token from wanted region server - Tokens lasts 24 hours, so we can make our requests for a WG connection information and port is required
-        # because PIA use custom certs which just have a SAN of their name eg london401, we have to put a temporary dns override in, to make it so london401 points to the meta IP
-        override_dns(state.metaCn, state.metaIp)
-        piaMetaSession = CreateRequestsSession((config['piaUsername'], config['piaPassword']), None, state.ca)
-
+        # Get PIA token from global API - Tokens last 24 hours, so we can make our requests for WG connection information and port if required
+        createObject = {
+            "username": config['piaUsername'],
+            "password": config['piaPassword']
+        }
+        logger.debug("Getting PIA Auth Token from global API")
         try:
-            request = GetRequest(piaMetaSession, f"https://{state.metaCn}/authv3/generateToken")
+            state.token = PIAToken(createObject)
         except ValueError as e:
-            logger.error(f"Meta generateToken - Error message: {str(e)}")
+            logger.error(f"PIAToken - Error message: {str(e)}")
             sys.exit(1)
-        state.token = json.loads(request.text)['token']
 
-        logger.debug(f"Your PIA Token (Meta), DO NOT GIVE THIS TO ANYONE: {state.token}")
+        logger.debug(f"Your PIA Token, DO NOT GIVE THIS TO ANYONE: {state.token}")
 
     # Now we have our PIA details, we can now request our WG connection information
     # because PIA use custom certs which just have a SAN of their name eg london401, we have to put a temporary dns override in, to make it so london401 points to the wg IP
@@ -743,8 +751,6 @@ for instance_obj in instances_array:
     # Write wireguard connection information to file, for later use.
     # we need to add server name as well
     wireguardServerInfo['server_name'] = state.wgCn
-    wireguardServerInfo['servermeta_name'] = state.metaCn
-    wireguardServerInfo['servermeta_ip'] = state.metaIp
     with open(instance_obj.InfoFile(), 'w') as filetowrite:
         filetowrite.write(json.dumps(wireguardServerInfo))
         logger.debug(f"Saved wireguard server information to {instance_obj.InfoFile()}")
@@ -921,14 +927,16 @@ for instance_obj in instances_array:
         # Port refresh required to scheduled the Wireguard server adding the port.
         portRefresh = True
         # get a new piatoken if we are renewing the port
-        override_dns(wireguardServerInfo['servermeta_name'], wireguardServerInfo['servermeta_ip'])
-        piaMetaSession = CreateRequestsSession((config['piaUsername'], config['piaPassword']), None, state.ca)
+        createObject = {
+            "username": config['piaUsername'],
+            "password": config['piaPassword']
+        }
+        logger.debug("Getting PIA Auth Token from global API for port forwarding")
         try:
-            request = GetRequest(piaMetaSession, f"https://{wireguardServerInfo['servermeta_name']}/authv3/generateToken")
+            state.token = PIAToken(createObject)
         except ValueError as e:
-            logger.error(f"Meta generateToken - Error message: {str(e)}")
+            logger.error(f"PIAToken - Error message: {str(e)}")
             sys.exit(1)
-        state.token = json.loads(request.text)['token']
 
         createObject = {
             "token": state.token
