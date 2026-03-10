@@ -10,7 +10,7 @@ You can also create a CRON job, allowing you to manually change the PIA server y
 
 **Prerequisites**
 ===
- 1. OPNsense 23.7.10 or later
+ 1. OPNsense 25.7.11 or later
  1. WireGuard Plugin Installed
  1. HTTPS WebUI enabled 
     1. `System: Settings: Administration -> Web GUI`
@@ -254,7 +254,7 @@ The script will be executed with:
     "dipToken": "",
     "dip": false,
     "portForward": true,
-    "opnsenseWGPort": "51815"
+    "opnsenseWGPort": "51815",
     "postConfigScript": "/conf/MyCustomScript.sh"
 }
 ...
