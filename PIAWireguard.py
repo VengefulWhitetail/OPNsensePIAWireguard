@@ -179,7 +179,7 @@ def PostRequest(session, url, data):
 def PIAServerList():
     try:
         url = state.serverList
-        r = requests.get(url, headers={'User-Agent': 'Github: FingerlessGlov3s/OPNsensePIAWireguard'}, timeout=10)
+        r = requests.get(url, headers={'User-Agent': 'Github: VengefulWhitetail/OPNsensePIAWireguard'}, timeout=10)
         if r.status_code == 401:
             raise ValueError("unauthorized")
         if r.status_code != 200:
@@ -191,7 +191,7 @@ def PIAServerList():
 def PIAToken(data):
     try:
         url = state.tokenApi
-        r = requests.post(url, headers={'User-Agent': 'Github: FingerlessGlov3s/OPNsensePIAWireguard', 'Content-Type': 'application/json'}, data=json.dumps(data), timeout=10)
+        r = requests.post(url, headers={'User-Agent': 'Github: VengefulWhitetail/OPNsensePIAWireguard', 'Content-Type': 'application/json'}, data=json.dumps(data), timeout=10)
         if r.status_code == 401:
             raise ValueError("unauthorized")
         if r.status_code != 200:
